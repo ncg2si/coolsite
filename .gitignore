@@ -1,0 +1,28 @@
+# Credentials
+.env
+*.pem
+
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+
+#  macOS junk files
+.DS_Store
+
+# Pipeline data - can be re-downloaded from the API
+data/bronze/
+data/silver/
+data/gold/
+
+# My notes
+docs/setup_steps.md
+docs/research/
+
+# Exploratory
+notebooks/
+
+# AI
+CLAUDE.md
+
