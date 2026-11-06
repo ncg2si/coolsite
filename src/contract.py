@@ -1,0 +1,1 @@
+EXPECT_FIELDS = ("time", "temperature_2m", "relative_humidity_2m", "dew_point_2m")
