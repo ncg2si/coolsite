@@ -41,6 +41,8 @@ The comparison is 18 challenger cities against the five FLAP-D cities, for Europ
 
 - DECIDED (2026-11-04): build LOCALLY first (thin slice → full local pipeline = guaranteed, gradable fallback), then MIGRATE to Databricks (target: Azure Databricks; plan B: Databricks Free Edition). Decision rule: if the Databricks move is not working by mid capstone week 3, present the local pipeline + deployed thin slice + migration plan. Portability rules: pure logic separate from IO; all paths/settings in config (local.yaml vs azure.yaml); Delta format from day one if possible; transforms in Spark SQL/PySpark (not pandas-specific); secrets only via env vars. Open: local setup option A (Docker+Airflow+Postgres+pandas) vs B (Airflow + Delta + PySpark or DuckDB) — decide before step 2 (first transform). Databricks learning: 4 sessions on Free Edition before capstone start.
 
+- DECIDED (2026-11-05): local engine = PySpark + Spark SQL (same engine as Databricks → no rewrite at migration). Validation split: structural checks (DQ-01 row count, DQ-08 timezone, DQ-09 fields) on the raw dict in plain Python, run first; content checks (DQ-02..07) as Spark SQL queries returning violating rows. Each check returns a severity-message pair or None; validate() reports warnings and raises once for errors.
+
 ## Out of scope
 Fibre, permits, community, electricity prices, land; per-facility PUE/WUE/ERF/REF (confidential under EU 2024/1364).
 
