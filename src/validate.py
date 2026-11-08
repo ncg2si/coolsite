@@ -2,10 +2,13 @@ import json
 import warnings
 from datetime import date
 from typing import Literal
-from ingest import bronze_path
+
+import pyspark.sql.functions as F
 from pyspark.sql import DataFrame, SparkSession
-from spark_utils import get_spark, read_bronze_hourly
+
 from contract import EXPECT_FIELDS
+from ingest import bronze_path
+from spark_utils import get_spark, read_bronze_hourly
 
 CheckResult = tuple[Literal["error", "warning"], str] | None
 
@@ -20,9 +23,9 @@ def inclusive_days(start:str, end:str) -> int:
     end_d = date.fromisoformat(end)
     return (end_d - start_d).days +1
 
-# Structural data quality checks (gate) return a severity-message pair or None. 
-# Answer the question: "Is the file usable at all?"
-# On failure stop the run, bronze is kept
+# Dataset rules
+# Answer the question: "Is the whole set complete and consistent"
+# Fail or warn
 
 def check_dq01_row_count(hourly:dict, start:str, end:str) -> CheckResult:
     """DQ-01: number of hours must equal inclusive days x24"""
@@ -30,6 +33,10 @@ def check_dq01_row_count(hourly:dict, start:str, end:str) -> CheckResult:
     expected = inclusive_days(start,end) * 24
     if actual != expected:
         return ("error", f"DQ-01 failed: file has {actual} hours, contract expects {expected}")
+
+# Structural data quality checks (gate) return a severity-message pair or None. 
+# Answer the question: "Is the file usable at all?"
+# On failure stop the run, bronze is kept
 
 def check_dq08_timezone_gmt(data:dict) -> CheckResult:
     """DQ-08: timezone must be GMT"""
@@ -49,17 +56,35 @@ def check_dq09_required_fields_present(hourly:dict) -> CheckResult:
 # Row rules and answer the question "Is this row valid?"
 # On Failure quarantine the bad rows, good rows continue
 
-def check_dq05_humidity_range(spark: SparkSession, df: DataFrame ) -> tuple[CheckResult, DataFrame]:
-    """DQ-05: relative humidity must be between 0 and 100 %."""
-    df.createOrReplaceTempView("bronze_hourly")
-    bad_rows = spark.sql(""" 
-        SELECT *
-        FROM bronze_hourly
-        WHERE relative_humidity_2m < 0 OR relative_humidity_2m > 100  -- comparison with NULL return NULL, DQ-02 checks for NULL
-    """)
-    n_bad = bad_rows.count()
-    if n_bad > 0:
-        return ("error", f"DQ-05 failed: {n_bad} rows with humidity outside 0-100%"), bad_rows
+ROW_RULES = {
+    "DQ-02a": "temperature_2m IS NOT NULL",
+    "DQ-02b": "dew_point_2m IS NOT NULL",
+    "DQ-02c": "relative_humidity_2m IS NOT NULL",
+    "DQ-05":  "relative_humidity_2m BETWEEN 0 AND 100",
+    "DQ-06":  "temperature_2m BETWEEN -50 AND 55",
+    "DQ-07":  "dew_point_2m <= temperature_2m"
+}
+
+def apply_row_rules(df:DataFrame, rules: dict[str,str]) -> tuple[DataFrame,DataFrame]:
+    """Split rows into valid and quarantined. Quarantined rows list the rule IDs they broke."""
+    failed =(F.array_compact(F.array(
+         *[ F.when(~F.coalesce(F.expr(condition),F.lit(True)),F.lit(rule_id))  for rule_id, condition in rules.items()])))
+    checked = df.withColumn("failed_rules", failed)
+    valid = checked.filter(F.size("failed_rules") ==0).drop("failed_rules")
+    quarantine = checked.filter(F.size("failed_rules")>0)
+    return valid, quarantine
+          
+# def check_dq05_humidity_range(spark: SparkSession, df: DataFrame ) -> tuple[CheckResult, DataFrame]:
+#     """DQ-05: relative humidity must be between 0 and 100 %."""
+#     df.createOrReplaceTempView("bronze_hourly")
+#     bad_rows = spark.sql(""" 
+#         SELECT *
+#         FROM bronze_hourly
+#         WHERE relative_humidity_2m < 0 OR relative_humidity_2m > 100  -- comparison with NULL return NULL, DQ-02 checks for NULL
+#     """)
+#     n_bad = bad_rows.count()
+#     if n_bad > 0:
+#         return ("error", f"DQ-05 failed: {n_bad} rows with humidity outside 0-100%"), bad_rows
     
 
 # Validate the bronze file for one city and one start date. Raise ValueError if any check fails.
@@ -85,7 +110,7 @@ def validate(city:str, start:str, end:str) -> None:
     check_results = [
                      check_dq01_row_count(hourly,start,end),
                     check_dq08_timezone_gmt(data),
-                    check_dq05_humidity_range(spark,df)[0]
+                    #check_dq05_humidity_range(spark,df)[0]
                     ]
     problems = []
     warning_messages = []
