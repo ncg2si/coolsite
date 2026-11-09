@@ -14,7 +14,7 @@ Status legend: ✅ done · 🟡 started · ⬜ open · ➕ optional extension
 | Ingestion and storage | reproducible pipeline, storage strategy, raw data preserved | 🟡 | src/ingest.py ✅ (bronze = raw, overwrite = idempotent); run metadata missing |
 | Incremental processing | new/changed data, updated records, no duplicates, recover partway, watermark | ⬜ | ERA5 revisions = "records updated after ingestion" → reload last 7 days + watermark per city |
 | Logging | start/finish, stage, counts extracted/processed/rejected/written, status, error | ⬜ | src/utils/logging.py |
-| Data quality | meaningful checks + tests | 🟡 | src/validate.py: structural DQ-01/08/09 ✅, content DQ-02..07 (Spark) next; pytest |
+| Data quality | meaningful checks + tests | 🟡 | src/validate.py: structural DQ-01/02 ✅, dataset DQ-03..05 + row DQ-06..09 (Spark) in progress; pytest |
 | Error handling | failure handling + recovery, DEMONSTRATED failure scenario, quarantine invalid records, retries | 🟡 | schema gate ✅ · quarantine table for bad rows ⬜ · retries in ingest ⬜ · failure demo ⬜ |
 | Version control | Git + setup/run instructions | ⬜ | git init + commits (GitHub optional) · README |
 | Governance and security | usage, privacy, access, credentials | ⬜ | Open-Meteo licence/attribution; no personal data; no secrets needed for Open-Meteo |

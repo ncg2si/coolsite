@@ -26,13 +26,13 @@ class ValidateTests(unittest.TestCase):
                 validate.validate("frankfurt", "2026-06-01", "2026-06-01")
 
         self.assertEqual(len(caught), 1)
-        self.assertIn("DQ-09 warning: unexpected fields", str(caught[0].message))
+        self.assertIn("DQ-01 warning: unexpected fields", str(caught[0].message))
 
     def test_missing_time_field_raises_validation_error(self):
         del self.data["hourly"]["time"]
 
         with patch("validate.load_bronze", return_value=self.data):
-            with self.assertRaisesRegex(ValueError, "DQ-09 failed: missing fields"):
+            with self.assertRaisesRegex(ValueError, "DQ-01 failed: missing fields"):
                 validate.validate("frankfurt", "2026-06-01", "2026-06-01")
 
 

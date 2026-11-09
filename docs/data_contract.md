@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.1 (2026-11-04) |
+| Version | 0.3 (2026-11-09) |
 | Producer | Open-Meteo Historical Weather API (ERA5 reanalysis) |
 | Consumer | CoolSite pipeline (transform → silver) |
 | Owner | Cam Lai Ngo |
@@ -23,29 +23,41 @@
 | relative_humidity_2m | int | int | % | relative humidity 2m above ground |
 
 ## 2. Quality rules (implemented in src/validate.py)
-| ID | Rule | Severity |
-|---|---|---|
-| DQ-01 | rows = days × 24 (both dates inclusive) | error |
-| DQ-02 | no nulls in any field | error |
-| DQ-03 | no duplicate hours | error |
-| DQ-04 | hourly steps of exactly 1 h, increasing | error |
-| DQ-05 | humidity 0–100 % | error |
-| DQ-06 | temperature -50 to 55 °C | error |
-| DQ-07 | dew point ≤ temperature  + 0 °C tolerance | error |
-| DQ-08 | timezone = "GMT" | error |
-| DQ-09 | all expected fields present (schema drift check) | error |
+| ID | Rule | Level | Severity / handling |
+|---|---|---|---|
+| DQ-01 | all expected fields present (schema drift check) | structural | missing field → always error, run stops · unexpected field → warning |
+| DQ-02 | timezone = "GMT" | structural | always error → run stops |
+| DQ-03 | rows = days × 24 (both dates inclusive) | dataset | missing hours count as unusable → see severity policy (warning within tolerance, error above) |
+| DQ-04 | no duplicate hours | dataset | identical duplicates → warning + remove the copies · conflicting duplicates (same hour, different values) → all copies count as unusable |
+| DQ-05 | consecutive hours exactly 1 h apart (no gaps, no off-grid times) | dataset | missing hours count as unusable → see severity policy |
+| DQ-06 | no nulls in any field | row | quarantine the row (counts as unusable) |
+| DQ-07 | humidity 0–100 % | row | quarantine the row |
+| DQ-08 | temperature -50 to 55 °C | row | quarantine the row |
+| DQ-09 | dew point ≤ temperature  + 0 °C tolerance | row | quarantine the row |
 
-- DQ-06 provisional; refine after profiling extremes (Helsinki January, Athens July)
-- DQ-07 Equality occurs only at 100 % humidity (saturation); no case of dew point > temperature in 2,640 profiled hours.
+- DQ-08 provisional; refine after profiling extremes (Helsinki January, Athens July)
+- DQ-09 Equality occurs only at 100 % humidity (saturation); no case of dew point > temperature in 2,640 profiled hours.
 
-## 3. Freshness
+## 3. Severity policy
+- **Unusable hours** = missing hours (DQ-03 / DQ-05) + quarantined rows (DQ-06, DQ-07, DQ-08, DQ-09) + hours with conflicting duplicates (DQ-04)
+- **Per run (each bronze file):** up to **2 unusable hours** → warning, the run continues; **more than 2** → error, the run fails
+  (an absolute tolerance, because incremental files are small: one bad hour in a 7-day file is already 0.6 %)
+- **Per city-year (gold):** a city-year is only used in comparisons if **≥ 99.9 %** of its expected hours are valid
+  (at most **0.1 %** unusable ≈ 8–9 hours per year); otherwise it is marked `incomplete`
+- **Metrics in gold are shares of valid hours** (e.g. free-cooling hours ÷ valid hours), and each city-year shows its coverage
+- **Structural problems (DQ-01 missing field, DQ-02) are always errors**, independent of the tolerance
+- Quarantined rows are kept with the IDs of the rules they broke — never deleted silently
+
+## 4. Freshness
 - ERA5 arrives with ~5 days delay; the most recent days come from another model
   and may be revised → every run reloads the last 7 days (overwrite, idempotent)
 
-## 4. Change handling
+## 5. Change handling
 - New field in the response → log a warning. A new field doesn't harm the pipeline but an expected field missing or renamed does. 
-- Expected field missing or renamed → DQ-09 fails → pipeline stops, bronze is kept
+- Expected field missing or renamed → DQ-01 fails → pipeline stops, bronze is kept
 - Contract change → raise the version number, note it here
 
-## 5. Change log
+## 6. Change log
 - 0.1 (2026-11-04): first version, from profiling Frankfurt (summer sample only)
+- 0.2 (2026-11-09): severity policy added (2 unusable hours per file, 0.1 % per city-year); rules grouped by level (structural / dataset / row); DQ-03 split into identical vs conflicting duplicates; DQ-04 reworded — "increasing" dropped, because hours are sorted before the check (order in the raw file is not meaningful in Spark)
+- 0.3 (2026-11-09): rules renumbered in the order they run (structural → dataset → row); no rule changed. Old → new: DQ-09→01, DQ-08→02, DQ-01→03, DQ-03→04, DQ-04→05, DQ-02→06, DQ-05→07, DQ-06→08, DQ-07→09
