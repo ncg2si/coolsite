@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.3 (2026-11-09) |
+| Version | 0.4 (2026-11-10) |
 | Producer | Open-Meteo Historical Weather API (ERA5 reanalysis) |
 | Consumer | CoolSite pipeline (transform → silver) |
 | Owner | Cam Lai Ngo |
@@ -22,12 +22,12 @@
 | dew_point_2m | float | float | °C | dew point 2m above ground |
 | relative_humidity_2m | int | int | % | relative humidity 2m above ground |
 
-## 2. Quality rules (implemented in src/validate.py)
+## 2. Quality rules (implemented in src/validate.py; IDs, fields and thresholds in src/contract.py)
 | ID | Rule | Level | Severity / handling |
 |---|---|---|---|
 | DQ-01 | all expected fields present (schema drift check) | structural | missing field → always error, run stops · unexpected field → warning |
-| DQ-02 | timezone = "GMT" | structural | always error → run stops |
-| DQ-03 | rows = days × 24 (both dates inclusive) | dataset | missing hours count as unusable → see severity policy (warning within tolerance, error above) |
+| DQ-02 | timezone = "GMT" (UTC) | structural | always error → run stops |
+| DQ-03 | time range covers exactly start 00:00 → end 23:00 (both dates inclusive; values parsed as datetime, not compared as text) | dataset | hours missing at the start or end count as unusable → see severity policy · hours outside the range → warning, excluded from silver (they belong to another run) |
 | DQ-04 | no duplicate hours | dataset | identical duplicates → warning + remove the copies · conflicting duplicates (same hour, different values) → all copies count as unusable |
 | DQ-05 | consecutive hours exactly 1 h apart (no gaps, no off-grid times) | dataset | missing hours count as unusable → see severity policy |
 | DQ-06 | no nulls in any field | row | quarantine the row (counts as unusable) |
@@ -37,9 +37,12 @@
 
 - DQ-08 provisional; refine after profiling extremes (Helsinki January, Athens July)
 - DQ-09 Equality occurs only at 100 % humidity (saturation); no case of dew point > temperature in 2,640 profiled hours.
+- The row count is not a rule of its own: if DQ-03, DQ-04 and DQ-05 pass, rows = days × 24 follows. It is logged as `rows_in`.
+- Each problem has exactly one owning rule: edges of the range → DQ-03, duplicates → DQ-04, gaps inside the range → DQ-05.
+- Order: DQ-01 and DQ-02 run first as a gate; if one fails the run stops at once (avoids follow-on errors, e.g. a shifted timezone also breaks DQ-03). Dataset and row rules all run, results are collected and decided together.
 
 ## 3. Severity policy
-- **Unusable hours** = missing hours (DQ-03 / DQ-05) + quarantined rows (DQ-06, DQ-07, DQ-08, DQ-09) + hours with conflicting duplicates (DQ-04)
+- **Unusable hours** = missing hours (DQ-03 at the edges / DQ-05 inside) + quarantined rows (DQ-06, DQ-07, DQ-08, DQ-09) + hours with conflicting duplicates (DQ-04)
 - **Per run (each bronze file):** up to **2 unusable hours** → warning, the run continues; **more than 2** → error, the run fails
   (an absolute tolerance, because incremental files are small: one bad hour in a 7-day file is already 0.6 %)
 - **Per city-year (gold):** a city-year is only used in comparisons if **≥ 99.9 %** of its expected hours are valid
@@ -61,3 +64,4 @@
 - 0.1 (2026-11-04): first version, from profiling Frankfurt (summer sample only)
 - 0.2 (2026-11-09): severity policy added (2 unusable hours per file, 0.1 % per city-year); rules grouped by level (structural / dataset / row); DQ-03 split into identical vs conflicting duplicates; DQ-04 reworded — "increasing" dropped, because hours are sorted before the check (order in the raw file is not meaningful in Spark)
 - 0.3 (2026-11-09): rules renumbered in the order they run (structural → dataset → row); no rule changed. Old → new: DQ-09→01, DQ-08→02, DQ-01→03, DQ-03→04, DQ-04→05, DQ-02→06, DQ-05→07, DQ-06→08, DQ-07→09
+- 0.4 (2026-11-10): DQ-03 changed from row count to time range (first/last hour), so every problem has one owner; row count only logged; extra hours outside the range → warning + excluded; gate order documented; thresholds and IDs mirrored in src/contract.py (CONTRACT_VERSION)

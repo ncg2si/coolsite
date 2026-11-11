@@ -4,10 +4,15 @@ from datetime import date
 from typing import Literal
 
 import pyspark.sql.functions as F
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql.window import Window
 
-from contract import EXPECT_FIELDS, ROW_RULES
+from contract import (
+    EXPECT_FIELDS,
+    EXPECT_TIMEZONE,
+    MAX_UNUSABLE_HOURS_PER_FILE,
+    ROW_RULES,
+)
 from ingest import bronze_path
 from spark_utils import get_spark, read_bronze_hourly
 
@@ -38,39 +43,127 @@ def check_dq01_required_fields_present(hourly:dict) -> CheckResult:
         return ("warning", f"DQ-01 warning: unexpected fields {unexpected}")
 
 def check_dq02_timezone_gmt(data:dict) -> CheckResult:
-    """DQ-02: timezone must be GMT"""
-    if data["timezone"] != "GMT":
-        return ("error", f"DQ-02 failed: timezone is {data['timezone']}, contract expects GMT")
+    """DQ-02: timezone must be EXPECT_TIMEZONE"""
+    if data["timezone"] != EXPECT_TIMEZONE:
+        return ("error", f"DQ-02 failed: timezone is {data['timezone']}, contract expects {EXPECT_TIMEZONE}")
 
 # Dataset rules
 # Answer the question: "Is the whole set complete and consistent?"
 # Fail or warn
 
-def check_dq03_row_count(hourly:dict, start:str, end:str) -> CheckResult:
-    """DQ-03: number of hours must equal inclusive days x24"""
-    actual = len(hourly["time"])
-    expected = inclusive_days(start,end) * 24
-    if actual != expected:
-        return ("error", f"DQ-03 failed: file has {actual} hours, contract expects {expected}")
+def range_bounds(start: str, end: str) -> tuple[Column, Column]:
+    """First and last expected hour: start 00:00 and end 23:00 (session time = UTC)."""
+    first = F.to_timestamp(F.lit(f"{start} 00:00:00"))
+    last = F.to_timestamp(F.lit(f"{end} 23:00:00"))
+    return first, last
 
-def check_dq04_no_duplicates_hour(df: DataFrame) -> tuple[CheckResult, DataFrame]:
-    """DQ-04: no duplicates of hours per city"""
-    duplicates = df.groupBy("city","time").agg(F.count("*").alias("count")).filter(F.col("count")>1)
-    n_dups = duplicates.count()
-    if n_dups > 0:
-        return ("error", f"DQ-04 error: {n_dups} row(s) duplicated"), duplicates
-    return None, duplicates
+def in_range(start: str, end: str) -> Column:
+    """True if the hour lies inside the expected range (both ends included)."""
+    first, last = range_bounds(start, end)
+    return F.col("time").between(first, last)
 
-def check_dq05_hourly_steps(df: DataFrame) -> tuple[CheckResult, DataFrame] | None:
-    """ DQ-05: consecutive hours must be exactly 1h apart, increasing"""
+def check_dq03_time_range(df: DataFrame, start: str, end: str) -> tuple[CheckResult, int]:
+    """DQ-03: hours must cover start 00:00 ... end 23:00.
+    - hours outside the range -> warning (excluded from silver, NOT unusable)
+    - hours missing at the edges -> warning + returned as unusable hours (budget: validate step 6)
+    - no hour inside the range -> error
+    - more or less than one city in the data -> error (assumption: one bronze file = one city)
+    Returns (result, missing_edge_hours)."""
+    n_cities = df.select("city").distinct().count()
+    if n_cities != 1:
+        return ("error", f"DQ-03 failed: expected exactly 1 city per file, found {n_cities}"), 0
+
+    first, last = range_bounds(start, end)
+    inside = in_range(start, end)
+    n_outside = df.filter(~inside).count()
+    edges = (df.filter(inside)
+               .agg(((F.min("time").cast("long") - first.cast("long")) / 3600).cast("int").alias("missing_head"),
+                    ((last.cast("long") - F.max("time").cast("long")) / 3600).cast("int").alias("missing_tail"))
+               .first())
+
+    if edges["missing_head"] is None:
+        return ("error", f"DQ-03 failed: no hours between {start} 00:00 and {end} 23:00"), 0
+
+    issues = []
+    if n_outside:
+        issues.append(f"{n_outside} hour(s) outside the range, excluded from silver")
+    if edges["missing_head"]:
+        issues.append(f"{edges['missing_head']} hour(s) missing at the start")
+    if edges["missing_tail"]:
+        issues.append(f"{edges['missing_tail']} hour(s) missing at the end")
+
+    missing = edges["missing_head"] + edges["missing_tail"]
+    if issues:
+        return ("warning", "DQ-03 warning: " + "; ".join(issues)), missing
+    return None, 0
+
+# Helper functions for dq04 check
+def drop_identical(df:DataFrame) -> DataFrame:
+    """Keep one copy of rows that are identical in every column"""
+    return df.dropDuplicates()
+def find_conflicting_hours(deduped:DataFrame) -> DataFrame:
+    """Conflicting hours (same time but different value)"""
+    return(deduped.groupBy("city","time").count()
+           .filter(F.col("count")>1)
+           .select("city","time")
+           )
+def check_dq04_no_duplicates_hour(df: DataFrame) -> tuple[CheckResult, int]:
+    """DQ-04: no duplicate hours.
+    - identical copies → warning, one copy kept
+    - same hour, different values → warning, all copies to quarantine, hour counts as unusable
+    Returns (result, conflicting_hours):
+        result            -- ("warning", message) if duplicates were found, otherwise None
+        conflicting_hours -- number of hours with conflicting values (unusable, for the error budget)"""
+    deduped = drop_identical(df)
+    n_identical = df.count() - deduped.count()
+    n_conflicting = find_conflicting_hours(deduped).count()
+    issues = []
+    if n_identical:
+        issues.append(f"{n_identical} identical duplicate row(s) removed")
+    if n_conflicting:
+        issues.append(f"{n_conflicting} hour(s) with conflicting values moved to quarantine")
+    if issues:
+        return("warning", "DQ-04 warning: " + "; ".join(issues)), n_conflicting
+    return None,0
+
+def split_duplicates(df:DataFrame) -> tuple[DataFrame, DataFrame]:
+    """Return (clean, quarantine).
+    clean: identical copies reduced to one, conflicting hours removed.
+    quarantine: all copies of conflicting hours, failed_rules = ['DQ-04']."""
+    deduped = drop_identical(df)
+    conflicting = find_conflicting_hours(deduped)
+    clean = deduped.join(conflicting , on=["city","time"], how="left_anti")
+    quarantine = (deduped.join(conflicting, on = ["city","time"], how ="left_semi")
+                  .withColumn("failed_rules", F.array(F.lit("DQ-04")))
+                  )
+    return clean, quarantine
+        
+
+def check_dq05_hourly_steps(df: DataFrame) -> tuple[CheckResult, int]:
+    """DQ-05: consecutive hours must be exactly 1 h apart (no gaps, no off-grid times).
+    Duplicates (diff 0) are ignored here, they belong to DQ-04.
+    Returns (result, missing_hours):
+        result        -- ("warning", message) if at least one step is not 1 h, otherwise None
+        missing_hours -- number of hours missing inside the range (unusable, for the error budget)"""
     w = Window.partitionBy("city").orderBy("time")
-    gaps = (df.withColumn("prev_time", F.lag("time").over(w))
+    steps = (df.withColumn("prev_time", F.lag("time").over(w))
             .withColumn("diff_seconds",F.col("time").cast("long") - F.col("prev_time").cast("long"))
-            .filter((F.col("diff_seconds") != 3600) & (F.col("diff_seconds") != 0) ))  #first gap NULL isn't a gap, duplicates rows counted in a different rule
-    n_gaps = gaps.count()
-    if n_gaps>0:
-        return ("error", "DQ-05 warning: violated exactly 1h step rule"), gaps
-    return None, gaps
+            .filter(F.col("diff_seconds").isNotNull() & (F.col("diff_seconds") != 0)))
+    stats = steps.agg(
+        F.coalesce(F.sum(F.when((F.col("diff_seconds") > 3600) & (F.col("diff_seconds") % 3600 == 0),
+                                F.col("diff_seconds") / 3600 - 1)), F.lit(0)).cast("int").alias("missing_hours"),
+        F.sum(F.when(F.col("diff_seconds") % 3600 != 0, 1).otherwise(0)).alias("off_grid_steps"),
+    ).first()
+    missing_hours = stats["missing_hours"]
+    off_grid = stats["off_grid_steps"] or 0
+    issues = []
+    if missing_hours:
+        issues.append(f"{missing_hours} hour(s) missing inside the range")
+    if off_grid:
+        issues.append(f"{off_grid} step(s) not on the full hour")
+    if issues:
+        return ("warning", "DQ-05 warning: " + "; ".join(issues)), missing_hours
+    return None, 0
     
 # Content data quality checks 
 # Row rules and answer the question "Is this row valid?"
@@ -79,7 +172,7 @@ def check_dq05_hourly_steps(df: DataFrame) -> tuple[CheckResult, DataFrame] | No
 def apply_row_rules(df:DataFrame, rules: dict[str,str]) -> tuple[DataFrame,DataFrame]:
     """Split rows into valid and quarantined. Quarantined rows list the rule IDs they broke."""
     failed =(F.array_compact(F.array(
-         *[ F.when(~F.coalesce(F.expr(condition),F.lit(True)),F.lit(rule_id))  for rule_id, condition in rules.items()])))
+         *[ F.when(~F.coalesce(F.expr(condition),F.lit(True)),F.lit(rule_id)) for rule_id, condition in rules.items()])))
     checked = df.withColumn("failed_rules", failed)
     valid = checked.filter(F.size("failed_rules") ==0).drop("failed_rules")
     quarantine = checked.filter(F.size("failed_rules")>0)
@@ -99,8 +192,9 @@ def collect(result: CheckResult, problems: list[str], warning_lists: list[str]) 
         raise ValueError(f"Unknown check severity: {severity!r}")
 
 
-# Validate the bronze file for one city and one start date. Raise ValueError if any check fails.
-MAX_QUARANTINE_SHARE = 0.01   # error budget: more than 1 % bad rows = something systematic
+# Validate the bronze file for one city and one start date. 
+# Separate validation
+
 
 def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
     """Run all DQ checks on one bronze file. Return (valid rows, quarantined rows)."""
@@ -110,42 +204,57 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
 
     # 1. GATE
     collect(check_dq01_required_fields_present(hourly), problems, warnings_list)
+    collect(check_dq02_timezone_gmt(data), problems, warnings_list)
     if problems:
         raise ValueError("Schema gate failed, other checks skipped:\n" + "\n".join(problems))
-
-    # 2. STRUCTURE
-    collect(check_dq03_row_count(hourly, start, end), problems, warnings_list)
-    if problems:
-        raise ValueError("Schema gate failed, other checks skipped:\n" + "\n".join(problems))
-
-    # 3. SPARK READ (only after the gate)
+    # 2. SPARK READ (only after the gate)
     spark = get_spark()
-    df = read_bronze_hourly(spark, str(bronze_path(city, start)), city)
-
-    # 4. DATASET RULES: each returns (result, rows); keep the result, the rows are for the log
-    dq04_result, duplicates = check_dq04_no_duplicates_hour(df)
-    collect(dq04_result, problems, warnings_list)
+    df = read_bronze_hourly(spark, str(bronze_path(city, start)), city).cache()
+    # 3. DATASET RULES (DQ-03 on the full data, then drop the out-of-range rows)
+    n_read = df.count()                                     # all rows from bronze (for the balance check)
+    dq03_result, missing_edge_hours = check_dq03_time_range(df, start, end)
+    collect(dq03_result, problems, warnings_list)
+    df = df.filter(in_range(start, end))                    # out-of-range rows never reach DQ-04/05 or silver
+    n_excluded = n_read - df.count()
+    # 4. MORE DATASET RULES: each returns (result, unusable hours)
+    dq04_result, conflicting_hours = check_dq04_no_duplicates_hour(df)
+    collect(dq04_result,problems,warnings_list)
+    # Check for DQ05 (gaps) first before removing duplicates:
+    dq05_result, n_missing_hours = check_dq05_hourly_steps(df)
+    collect(dq05_result, problems, warnings_list)
     
+    # remove identical duplicates and move conflicting hours to quarantine
 
+    df, dup_quarantine = split_duplicates(df)
+    df = df.cache()
+    
+    
     # 5. ROW RULES
     valid, quarantine = apply_row_rules(df, ROW_RULES)
     n_in, n_valid, n_quarantine = df.count(), valid.count(), quarantine.count()
-    # TODO: check that n_valid + n_quarantine == n_in  (otherwise: a bug in the split → error)
-
+    if n_valid + n_quarantine != n_in:
+        problems.append(f"Error occured while applying row rules {ROW_RULES}")
+    
     # 6. DECIDE
-    # TODO: if n_quarantine / n_in > MAX_QUARANTINE_SHARE → add an error to problems
+    # Unusable hours = missing hours (DQ-03 at the edges / DQ-05 inside) + 
+    # quarantined rows (DQ-06, DQ-07, DQ-08, DQ-09) + 
+    # hours with conflicting duplicates (DQ-04)
+    quarantine = quarantine.unionByName(dup_quarantine)
+    unusable_hours = (missing_edge_hours + n_missing_hours + conflicting_hours + n_quarantine ) 
+    n_total_quarantine = quarantine.count()
+    if unusable_hours > MAX_UNUSABLE_HOURS_PER_FILE:
+        problems.append(f"{unusable_hours} hour(s) unusable exceeded budget of {MAX_UNUSABLE_HOURS_PER_FILE} unusable hours per file")
+    elif unusable_hours > 0:
+        collect(("warning", f"{unusable_hours} unusable hour(s), within budget"), problems, warnings_list)
     if problems:
-        raise ValueError("\n".join(problems))
+        raise ValueError("Validation failed:\n" + "\n".join(problems))
 
     # 7. SUMMARY: one line, all numbers (the guide asks for this)
-    print(f"{city} {start}: rows_in={n_in} valid={n_valid} "
-          f"quarantined={n_quarantine} warnings={len(warnings_list)}")
+    print(f"{city} {start}: rows_read={n_read} excluded={n_excluded} rows_in={n_in} valid={n_valid} "
+          f"quarantined={n_total_quarantine} warnings={len(warnings_list)}")
 
     # 8. RETURN
     return valid, quarantine
-
-
-
 
 
 if __name__ == "__main__":

@@ -17,9 +17,8 @@ data/silver/
 data/gold/
 
 # My notes
-docs/setup_steps.md
-docs/research/
-docs/misc/
+docs/
+
 
 # Exploratory
 notebooks/
