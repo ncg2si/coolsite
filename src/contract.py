@@ -1,6 +1,6 @@
 """Machine-readable part of docs/data_contract.md. Change both together and raise the version."""
 
-CONTRACT_VERSION = "0.4"
+CONTRACT_VERSION = "0.5"
 
 WEATHER_MODEL = "era5_land"
 # Structural (DQ-01): fields every bronze file must have
