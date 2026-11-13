@@ -10,6 +10,7 @@ def get_spark() -> SparkSession:
             .appName("coolsite")
             .master("local[*]")
             .config("spark.sql.session.timeZone", "UTC")
+            .config("spark.sql.shuffle.partitions", "8")
             .getOrCreate()
     )
 def read_bronze_hourly(spark: SparkSession, path: str, city: str) -> DataFrame:
