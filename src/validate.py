@@ -16,7 +16,27 @@ from contract import (
 from ingest import bronze_path
 from spark_utils import get_spark, read_bronze_hourly
 
+
 CheckResult = tuple[Literal["error", "warning"], str] | None
+
+
+from datetime import date
+
+
+def parse_date_range(start: str, end: str) -> tuple[date, date]:
+    """Check that start/end are real dates (YYYY-MM-DD) and start <= end.
+    Raises ValueError with a clear message otherwise."""
+    try:
+        start_d = date.fromisoformat(start)
+    except ValueError:
+        raise ValueError(f"invalid start date {start!r}, expected YYYY-MM-DD") from None
+    try:
+        end_d = date.fromisoformat(end)
+    except ValueError:
+        raise ValueError(f"invalid end date {end!r}, expected YYYY-MM-DD") from None
+    if start_d > end_d:
+        raise ValueError(f"start date {start} is after end date {end}")
+    return start_d, end_d
 
 def load_bronze(city:str, start:str) -> dict:
     """Read one bronze file and return the raw API dict"""
@@ -198,6 +218,8 @@ def collect(result: CheckResult, problems: list[str], warning_lists: list[str]) 
 
 def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
     """Run all DQ checks on one bronze file. Return (valid rows, quarantined rows)."""
+    start_d, end_d = parse_date_range(start,end)
+    start, end = start_d.isoformat(), end_d.isoformat()   # luôn là "2025-12-31"
     data = load_bronze(city, start)
     hourly = data["hourly"]
     problems, warnings_list = [], []
@@ -260,5 +282,7 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
 if __name__ == "__main__":
     start = "2025-01-01"
     end = "2025-12-31"
+    
+
     #validate(city="frankfurt", start=start, end=end)
     validate(city="barcelona", start=start, end=end)

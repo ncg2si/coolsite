@@ -18,7 +18,8 @@ data/gold/
 
 # My notes
 docs/
-
+# Logs
+logs/
 
 # Exploratory
 notebooks/

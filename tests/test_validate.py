@@ -3,8 +3,25 @@ import json
 import pytest
 
 import validate  # validate() tested on fake (broken) bronze files
+from validate import parse_date_range
 
 DAY = "2026-06-01"
+
+
+
+
+def test_invalid_end_date_is_rejected():
+    with pytest.raises(ValueError, match="invalid end date"):
+        parse_date_range("2025-01-01", "2025-31-12")
+
+def test_start_after_end_is_rejected():
+    with pytest.raises(ValueError, match="is after end date"):
+        parse_date_range("2025-12-31","2025-01-01")
+
+def test_valid_range_returns_dates():
+    start_d, end_d = parse_date_range("2025-01-01", "2025-12-31")
+    assert end_d.month == 12
+
 
 
 # ---------------------------------------------------------------------------
