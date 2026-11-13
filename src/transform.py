@@ -6,7 +6,9 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
 from contract import CONTRACT_VERSION, WEATHER_MODEL
+from spark_utils import get_spark
 from utils.log import get_logger
+from paths import SILVER, QUARANTINE
 from utils.wetbulb import wet_bulb_stull
 from validate import validate
 
@@ -17,8 +19,6 @@ def make_run_id(city:str, start:str) -> str:
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     return f"{ts}_{city}_{start[:4]}"
 
-SILVER = "data/silver" 
-QUARANTINE = "data/quarantine"
 
 SILVER_COLUMNS = ["city", "year", "time", "temperature_c", "humidity_pct", "dew_point_c",
                   "wet_bulb_c", "source_model", "contract_version", "processed_at","run_id"]
@@ -54,14 +54,16 @@ def run(city: str, start: str, end: str) -> None:
         valid, quarantine = validate(city, start, end)
         n_valid, n_quarantine = valid.count(), quarantine.count()
         log.info(f"[{run_id}] validate done: valid = {n_valid} quarantine = {n_quarantine}")
-        write_partitioned(to_silver(valid, run_id),SILVER)
+        write_partitioned(to_silver(valid, run_id), str(SILVER))
         log.info(f"[{run_id}] silver written: {n_valid} rows")
-        write_partitioned(quarantine.withColumn("year",F.year(F.col("time"))),QUARANTINE)
+        write_partitioned(quarantine.withColumn("year",F.year(F.col("time"))), str(QUARANTINE))
         log.info(f"[{run_id}] quarantine written: {n_quarantine} rows")
         log.info(f"[{run_id}] run finished: SUCCESS ({time.perf_counter() - t0:.1f} s)")
     except Exception:
         log.exception(f"[{run_id}] run FAILED")
         raise
+    finally:
+        get_spark().catalog.clearCache()
 if __name__ == "__main__":
     #run("frankfurt","2025-01-01", "2025-12-31")
     run("barcelona","2025-01-01", "2025-12-31")

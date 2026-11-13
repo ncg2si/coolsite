@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-LOG_DIR = PROJECT_ROOT/ "logs"
+from paths import LOGS
+
+LOG_DIR = LOGS
 FORMAT = "%(asctime)s %(levelname)-7s %(name)-10s %(funcName)-12s %(message)s"
 
 def get_logger(name: str) -> logging.Logger:

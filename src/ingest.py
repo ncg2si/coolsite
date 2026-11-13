@@ -3,10 +3,9 @@ from pathlib import Path
 import requests
 
 from contract import WEATHER_MODEL
+from paths import BRONZE
 
 URL = "https://archive-api.open-meteo.com/v1/archive"
-ROOT = Path(__file__).resolve().parents[1]
-BRONZE = ROOT / "data" / "bronze"
 
 def fetch_weather(lat: float, lon: float, start: str, end: str) -> dict:
     """Call Open-Meteo and return the raw JSON response as a dict."""

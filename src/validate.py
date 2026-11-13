@@ -19,7 +19,7 @@ from spark_utils import get_spark, read_bronze_hourly
 CheckResult = tuple[Literal["error", "warning"], str] | None
 
 
-from datetime import date
+
 
 
 def parse_date_range(start: str, end: str) -> tuple[date, date]:
@@ -230,52 +230,55 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
         raise ValueError("Schema gate failed, other checks skipped:\n" + "\n".join(problems))
     # 2. SPARK READ (only after the gate)
     spark = get_spark()
-    df = read_bronze_hourly(spark, str(bronze_path(city, start)), city).cache()
+    raw = read_bronze_hourly(spark, str(bronze_path(city, start)), city).cache()
     # 3. DATASET RULES (DQ-03 on the full data, then drop the out-of-range rows)
-    n_read = df.count()                                     # all rows from bronze (for the balance check)
-    dq03_result, missing_edge_hours = check_dq03_time_range(df, start, end)
-    collect(dq03_result, problems, warnings_list)
-    df = df.filter(in_range(start, end))                    # out-of-range rows never reach DQ-04/05 or silver
-    n_excluded = n_read - df.count()
-    # 4. MORE DATASET RULES: each returns (result, unusable hours)
-    dq04_result, conflicting_hours = check_dq04_no_duplicates_hour(df)
-    collect(dq04_result,problems,warnings_list)
-    # Check for DQ05 (gaps) first before removing duplicates:
-    dq05_result, n_missing_hours = check_dq05_hourly_steps(df)
-    collect(dq05_result, problems, warnings_list)
+    try:
+        n_read = raw.count()                                     # all rows from bronze (for the balance check)
+        dq03_result, missing_edge_hours = check_dq03_time_range(raw, start, end)
+        collect(dq03_result, problems, warnings_list)
+        raw = raw.filter(in_range(start, end))                    # out-of-range rows never reach DQ-04/05 or silver
+        n_excluded = n_read - raw.count()
+        # 4. MORE DATASET RULES: each returns (result, unusable hours)
+        dq04_result, conflicting_hours = check_dq04_no_duplicates_hour(raw)
+        collect(dq04_result,problems,warnings_list)
+        # Check for DQ05 (gaps) first before removing duplicates:
+        dq05_result, n_missing_hours = check_dq05_hourly_steps(raw)
+        collect(dq05_result, problems, warnings_list)
     
-    # remove identical duplicates and move conflicting hours to quarantine
+        # remove identical duplicates and move conflicting hours to quarantine
 
-    df, dup_quarantine = split_duplicates(df)
-    df = df.cache()
+        clean, dup_quarantine = split_duplicates(raw)
+        clean = clean.cache()
     
     
-    # 5. ROW RULES
-    valid, quarantine = apply_row_rules(df, ROW_RULES)
-    n_in, n_valid, n_quarantine = df.count(), valid.count(), quarantine.count()
-    if n_valid + n_quarantine != n_in:
-        problems.append(f"Error occured while applying row rules {ROW_RULES}")
+        # 5. ROW RULES
+        valid, quarantine = apply_row_rules(clean, ROW_RULES)
+        n_in, n_valid, n_quarantine = clean.count(), valid.count(), quarantine.count()
+        if n_valid + n_quarantine != n_in:
+            problems.append(f"Error occured while applying row rules {ROW_RULES}")
     
-    # 6. DECIDE
-    # Unusable hours = missing hours (DQ-03 at the edges / DQ-05 inside) + 
-    # quarantined rows (DQ-06, DQ-07, DQ-08, DQ-09) + 
-    # hours with conflicting duplicates (DQ-04)
-    quarantine = quarantine.unionByName(dup_quarantine)
-    unusable_hours = (missing_edge_hours + n_missing_hours + conflicting_hours + n_quarantine ) 
-    n_total_quarantine = quarantine.count()
-    if unusable_hours > MAX_UNUSABLE_HOURS_PER_FILE:
-        problems.append(f"{unusable_hours} hour(s) unusable exceeded budget of {MAX_UNUSABLE_HOURS_PER_FILE} unusable hours per file")
-    elif unusable_hours > 0:
-        collect(("warning", f"{unusable_hours} unusable hour(s), within budget"), problems, warnings_list)
-    if problems:
-        raise ValueError("Validation failed:\n" + "\n".join(problems))
+        # 6. DECIDE
+        # Unusable hours = missing hours (DQ-03 at the edges / DQ-05 inside) + 
+        # quarantined rows (DQ-06, DQ-07, DQ-08, DQ-09) + 
+        # hours with conflicting duplicates (DQ-04)
+        quarantine = quarantine.unionByName(dup_quarantine)
+        unusable_hours = (missing_edge_hours + n_missing_hours + conflicting_hours + n_quarantine ) 
+        n_total_quarantine = quarantine.count()
+        if unusable_hours > MAX_UNUSABLE_HOURS_PER_FILE:
+            problems.append(f"{unusable_hours} hour(s) unusable exceeded budget of {MAX_UNUSABLE_HOURS_PER_FILE} unusable hours per file")
+        elif unusable_hours > 0:
+            collect(("warning", f"{unusable_hours} unusable hour(s), within budget"), problems, warnings_list)
+        if problems:
+            raise ValueError("Validation failed:\n" + "\n".join(problems))
 
-    # 7. SUMMARY: one line, all numbers (the guide asks for this)
-    print(f"{city} {start}: rows_read={n_read} excluded={n_excluded} rows_in={n_in} valid={n_valid} "
-          f"quarantined={n_total_quarantine} warnings={len(warnings_list)}")
+        # 7. SUMMARY: one line, all numbers (the guide asks for this)
+        print(f"{city} {start}: rows_read={n_read} excluded={n_excluded} rows_in={n_in} valid={n_valid} "
+            f"quarantined={n_total_quarantine} warnings={len(warnings_list)}")
 
-    # 8. RETURN
-    return valid, quarantine
+        # 8. RETURN
+        return valid, quarantine
+    finally:
+        raw.unpersist()
 
 
 if __name__ == "__main__":
