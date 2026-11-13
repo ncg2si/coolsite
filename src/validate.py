@@ -16,7 +16,6 @@ from contract import (
 from ingest import bronze_path
 from spark_utils import get_spark, read_bronze_hourly
 
-
 CheckResult = tuple[Literal["error", "warning"], str] | None
 
 

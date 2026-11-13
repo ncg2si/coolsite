@@ -8,7 +8,7 @@ from utils.wetbulb import wet_bulb_stull
 def spark():
     return get_spark()
 
-def test_stull_example_from_pager(spark):
+def test_stull_example_from_paper(spark):
     # a dataframe with 1 row, 2 column t and rh
     df = spark.createDataFrame([(20.0, 50.0)], ["t","rh"])
 
