@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1060" viewBox="0 0 1800 1060" font-family="Inter, DejaVu Sans, sans-serif" xmlns:c2pa="http://c2pa.org/manifest">
+  <rect width="1800" height="1060" fill="#FFFFFF"/>
+  <text x="900" y="72" text-anchor="middle" font-size="46" font-weight="700" fill="#1F2933">Three ways to cool a data centre</text>
+  <text x="900" y="118" text-anchor="middle" font-size="26" fill="#52606D">…and the three ways you cool yourself</text>
+
+  <!-- ============ CARD 1: FAN ============ -->
+  <g transform="translate(60,160)">
+    <rect width="520" height="860" rx="22" fill="#F1F8F4" stroke="#2E8B57" stroke-width="3"/>
+    <path d="M0 22 a22 22 0 0 1 22 -22 h476 a22 22 0 0 1 22 22 v58 h-520 z" fill="#2E8B57"/>
+    <text x="260" y="54" text-anchor="middle" font-size="32" font-weight="700" fill="#fff">1 · Free cooling</text>
+    <!-- fan icon -->
+    <g transform="translate(260,250)">
+      <path d="M-150 -40 q20 -10 40 0 t40 0" fill="none" stroke="#7FB89A" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-160 0 q20 -10 40 0 t40 0" fill="none" stroke="#7FB89A" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-150 40 q20 -10 40 0 t40 0" fill="none" stroke="#7FB89A" stroke-width="5" stroke-linecap="round"/>
+      <g transform="translate(60,0)">
+        <circle r="100" fill="#fff" stroke="#2E8B57" stroke-width="8"/>
+        <ellipse cx="0" cy="-45" rx="24" ry="45" fill="#2E8B57" transform="rotate(0)"/>
+        <ellipse cx="0" cy="-45" rx="24" ry="45" fill="#2E8B57" transform="rotate(120)"/>
+        <ellipse cx="0" cy="-45" rx="24" ry="45" fill="#2E8B57" transform="rotate(240)"/>
+        <circle r="16" fill="#1F5E3B"/>
+        <rect x="-10" y="100" width="20" height="40" fill="#2E8B57"/>
+        <rect x="-60" y="138" width="120" height="16" rx="8" fill="#2E8B57"/>
+      </g>
+    </g>
+    <text x="260" y="460" text-anchor="middle" font-size="34" font-weight="700" fill="#1F2933">Like switching on a fan</text>
+    <text x="30" y="530" font-size="22" font-weight="700" fill="#2E8B57">WORKS WHEN</text>
+    <text x="30" y="564" font-size="26" fill="#1F2933">it is cool outside</text>
+    <text x="30" y="630" font-size="22" font-weight="700" fill="#2E8B57">THE DATA CENTRE</text>
+    <text x="30" y="664" font-size="26" fill="#1F2933">just uses cool outside air</text>
+    <text x="30" y="698" font-size="26" fill="#1F2933">(fans and pumps only)</text>
+    <text x="30" y="764" font-size="22" font-weight="700" fill="#2E8B57">IT COSTS</text>
+    <text x="30" y="804" font-size="24" fill="#1F2933">Electricity</text>
+    <g transform="translate(200,784)"><rect width="56" height="24" rx="5" fill="#E8A33D"/><rect x="64" width="56" height="24" rx="5" fill="#DDE3E8"/><rect x="128" width="56" height="24" rx="5" fill="#DDE3E8"/></g>
+    <text x="400" y="804" font-size="22" fill="#52606D">low</text>
+    <text x="30" y="842" font-size="24" fill="#1F2933">Water</text>
+    <g transform="translate(200,822)"><rect width="56" height="24" rx="5" fill="#DDE3E8"/><rect x="64" width="56" height="24" rx="5" fill="#DDE3E8"/><rect x="128" width="56" height="24" rx="5" fill="#DDE3E8"/></g>
+    <text x="400" y="842" font-size="22" fill="#52606D">none</text>
+  </g>
+
+  <!-- ============ CARD 2: SWEAT ============ -->
+  <g transform="translate(640,160)">
+    <rect width="520" height="860" rx="22" fill="#EEF5FB" stroke="#2F7FC1" stroke-width="3"/>
+    <path d="M0 22 a22 22 0 0 1 22 -22 h476 a22 22 0 0 1 22 22 v58 h-520 z" fill="#2F7FC1"/>
+    <text x="260" y="54" text-anchor="middle" font-size="32" font-weight="700" fill="#fff">2 · Evaporative cooling</text>
+    <!-- sweating face -->
+    <g transform="translate(260,260)">
+      <circle r="105" fill="#FFD27A" stroke="#C98A1B" stroke-width="6"/>
+      <path d="M-50 -30 q12 -14 24 0" fill="none" stroke="#5A3A0A" stroke-width="7" stroke-linecap="round"/>
+      <path d="M26 -30 q12 -14 24 0" fill="none" stroke="#5A3A0A" stroke-width="7" stroke-linecap="round"/>
+      <path d="M-40 35 q40 30 80 0" fill="none" stroke="#5A3A0A" stroke-width="7" stroke-linecap="round"/>
+      <!-- sweat drops -->
+      <path d="M70 -70 q14 22 0 30 q-14 -8 0 -30 z" fill="#2F7FC1"/>
+      <path d="M95 -20 q12 19 0 26 q-12 -7 0 -26 z" fill="#2F7FC1"/>
+      <path d="M-82 -55 q12 19 0 26 q-12 -7 0 -26 z" fill="#2F7FC1"/>
+      <!-- evaporation wisps -->
+      <path d="M120 -120 q-10 -14 0 -28 t0 -28" fill="none" stroke="#8DBBE3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M150 -95 q-10 -14 0 -28 t0 -28" fill="none" stroke="#8DBBE3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-120 -115 q-10 -14 0 -28 t0 -28" fill="none" stroke="#8DBBE3" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <text x="260" y="460" text-anchor="middle" font-size="34" font-weight="700" fill="#1F2933">Like sweating</text>
+    <text x="30" y="530" font-size="22" font-weight="700" fill="#2F7FC1">WORKS WHEN</text>
+    <text x="30" y="564" font-size="26" fill="#1F2933">it is warm, but the air is dry</text>
+    <text x="30" y="630" font-size="22" font-weight="700" fill="#2F7FC1">THE DATA CENTRE</text>
+    <text x="30" y="664" font-size="26" fill="#1F2933">sprays water; when it dries,</text>
+    <text x="30" y="698" font-size="26" fill="#1F2933">it takes the heat away</text>
+    <text x="30" y="764" font-size="22" font-weight="700" fill="#2F7FC1">IT COSTS</text>
+    <text x="30" y="804" font-size="24" fill="#1F2933">Electricity</text>
+    <g transform="translate(200,784)"><rect width="56" height="24" rx="5" fill="#E8A33D"/><rect x="64" width="56" height="24" rx="5" fill="#DDE3E8"/><rect x="128" width="56" height="24" rx="5" fill="#DDE3E8"/></g>
+    <text x="400" y="804" font-size="22" fill="#52606D">low</text>
+    <text x="30" y="842" font-size="24" fill="#1F2933">Water</text>
+    <g transform="translate(200,822)"><rect width="56" height="24" rx="5" fill="#2F7FC1"/><rect x="64" width="56" height="24" rx="5" fill="#2F7FC1"/><rect x="128" width="56" height="24" rx="5" fill="#2F7FC1"/></g>
+    <text x="400" y="842" font-size="22" fill="#52606D">a lot</text>
+  </g>
+
+  <!-- ============ CARD 3: FRIDGE ============ -->
+  <g transform="translate(1220,160)">
+    <rect width="520" height="860" rx="22" fill="#FCF0EE" stroke="#C8473A" stroke-width="3"/>
+    <path d="M0 22 a22 22 0 0 1 22 -22 h476 a22 22 0 0 1 22 22 v58 h-520 z" fill="#C8473A"/>
+    <text x="260" y="54" text-anchor="middle" font-size="32" font-weight="700" fill="#fff">3 · Chiller</text>
+    <!-- air conditioner icon: indoor unit | wall | outdoor unit -->
+    <g>
+      <text x="130" y="122" text-anchor="middle" font-size="20" fill="#7B8794">inside</text>
+      <text x="400" y="122" text-anchor="middle" font-size="20" fill="#7B8794">outside</text>
+      <line x1="270" y1="105" x2="270" y2="400" stroke="#9AA5B1" stroke-width="8"/>
+      <!-- indoor split unit -->
+      <rect x="30" y="145" width="210" height="70" rx="14" fill="#fff" stroke="#C8473A" stroke-width="7"/>
+      <line x1="50" y1="198" x2="220" y2="198" stroke="#C8473A" stroke-width="4"/>
+      <!-- cold air -->
+      <g stroke="#2F7FC1" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M70 232 q-8 20 0 40 t0 40"/><path d="M135 232 q-8 20 0 40 t0 40"/><path d="M200 232 q-8 20 0 40 t0 40"/>
+      </g>
+      <!-- pipe -->
+      <path d="M240 175 H 300 V 285 H 315" fill="none" stroke="#9AA5B1" stroke-width="6"/>
+      <!-- outdoor unit -->
+      <rect x="315" y="240" width="170" height="135" rx="12" fill="#fff" stroke="#C8473A" stroke-width="7"/>
+      <circle cx="380" cy="308" r="44" fill="none" stroke="#C8473A" stroke-width="5"/>
+      <g fill="#C8473A"><ellipse cx="380" cy="288" rx="9" ry="20"/><ellipse cx="380" cy="288" rx="9" ry="20" transform="rotate(120 380 308)"/><ellipse cx="380" cy="288" rx="9" ry="20" transform="rotate(240 380 308)"/></g>
+      <rect x="440" y="265" width="30" height="8" rx="4" fill="#C8473A"/><rect x="440" y="285" width="30" height="8" rx="4" fill="#C8473A"/><rect x="440" y="305" width="30" height="8" rx="4" fill="#C8473A"/>
+      <!-- heat out -->
+      <g stroke="#C8473A" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M345 225 q-8 -14 0 -28 t0 -28"/><path d="M395 225 q-8 -14 0 -28 t0 -28"/><path d="M445 225 q-8 -14 0 -28 t0 -28"/>
+      </g>
+      <text x="400" y="156" text-anchor="middle" font-size="21" font-weight="700" fill="#C8473A">heat out</text>
+      <!-- electricity -->
+      <path transform="translate(-28,-232)" d="M498 330 l-16 34 h14 l-10 32 l28 -42 h-14 l12 -24 z" fill="#E8A33D"/>
+    </g>
+    <text x="260" y="460" text-anchor="middle" font-size="34" font-weight="700" fill="#1F2933">Like an air conditioner</text>
+    <text x="30" y="530" font-size="22" font-weight="700" fill="#C8473A">NEEDED WHEN</text>
+    <text x="30" y="564" font-size="26" fill="#1F2933">it is hot and sticky (humid)</text>
+    <text x="30" y="630" font-size="22" font-weight="700" fill="#C8473A">THE DATA CENTRE</text>
+    <text x="30" y="664" font-size="26" fill="#1F2933">runs a compressor that pumps</text>
+    <text x="30" y="698" font-size="26" fill="#1F2933">the heat outside, like an AC</text>
+    <text x="30" y="764" font-size="22" font-weight="700" fill="#C8473A">IT COSTS</text>
+    <text x="30" y="804" font-size="24" fill="#1F2933">Electricity</text>
+    <g transform="translate(200,784)"><rect width="56" height="24" rx="5" fill="#E8A33D"/><rect x="64" width="56" height="24" rx="5" fill="#E8A33D"/><rect x="128" width="56" height="24" rx="5" fill="#E8A33D"/></g>
+    <text x="400" y="804" font-size="22" fill="#52606D">a lot</text>
+    <text x="30" y="842" font-size="24" fill="#1F2933">Water</text>
+    <g transform="translate(200,822)"><rect width="56" height="24" rx="5" fill="#DDE3E8"/><rect x="64" width="56" height="24" rx="5" fill="#DDE3E8"/><rect x="128" width="56" height="24" rx="5" fill="#DDE3E8"/></g>
+    <text x="400" y="842" font-size="22" fill="#52606D">none*</text>
+  </g>
+
+  <text x="60" y="1046" font-size="19" fill="#7B8794">* assuming a dry cooler. With a cooling tower, the chiller also uses water.   Electricity → PUE (power efficiency) · Water → WUE (water efficiency)</text>
+<metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTo2YTZhZjMyZC1hM2EzLTQ5NDItOWQyNy01ZjFhMDYzYWQ2ZDkAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaCatmclyZUmVFHt0SR75PmwAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDo0M2JlZWY3MS1kODg4LTQ3MmQtODJmZi0wMzhhNTA1MjBlNDJscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoBEGz1jAnVQUowy8TU8yT+AAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggkSVQHEUAiNwVPrzL3H385iPRVFYtjZx+hPcBlatHshOkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaHUNrBSkk4Kr3AeGpXS15wgAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYIF8CaYv9CVVebaTYxkmKFkZ0GJjDsps0eO0kOV8LaCdyZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GSfcZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjZhNmFmMzJkLWEzYTMtNDk0Mi05ZDI3LTVmMWEwNjNhZDZkOS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmI1YjBlYWMzLTU2YWItNDg3OS1iYmZjLWZmNTVmODVhOTI1Y3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCCRJVAcRQCI3BU+vMvcffzmI9FUVi2NnH6E9wGVq0eyE6JjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFgg4/J7+Lg9B2Zsz94J+Mu3yYzbolIU04/tPsI1hep0DgKiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggeqMXKG4fNVcZJ7BbTEWnm0/NfF8bp+KRI5fCONgLyc10Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQIOARyQwp9qBf6ExjQqF0GLjSI+DnwrvaV7UjySsdpGIw/jP4+WoXGkjKdIwWxBjTsT9r2Ox38LzXN2+0aRNGkU=</c2pa:manifest></metadata></svg>

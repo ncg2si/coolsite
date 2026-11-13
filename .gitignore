@@ -15,9 +15,13 @@ __pycache__/
 data/bronze/
 data/silver/
 data/gold/
+data/quarantine/
 
-# My notes
-docs/
+# Private notes and working documents (not part of the project documentation)
+docs/private/
+docs/progress_log.md
+docs/dashboard_and_gold_plan.md
+docs/cooling_video_plan.md
 # Logs
 logs/
 
