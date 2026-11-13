@@ -2,6 +2,7 @@
 
 CONTRACT_VERSION = "0.4"
 
+WEATHER_MODEL = "era5_land"
 # Structural (DQ-01): fields every bronze file must have
 EXPECT_FIELDS = ("time", "temperature_2m", "relative_humidity_2m", "dew_point_2m")
 

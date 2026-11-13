@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 import requests
 
+from contract import WEATHER_MODEL
+
 URL = "https://archive-api.open-meteo.com/v1/archive"
 ROOT = Path(__file__).resolve().parents[1]
 BRONZE = ROOT / "data" / "bronze"
@@ -14,8 +16,10 @@ def fetch_weather(lat: float, lon: float, start: str, end: str) -> dict:
         "start_date": start,
         "end_date": end,
         "hourly": "temperature_2m,relative_humidity_2m,dew_point_2m",
+        "models": WEATHER_MODEL,
+        "timezone": "GMT",
     }
-    response = requests.get(url=URL, params=params, timeout=5)
+    response = requests.get(url=URL, params=params, timeout=60)
     response.raise_for_status()
     return response.json()
 
@@ -31,6 +35,8 @@ def save_bronze(data: dict, city: str, start: str) -> Path:
     return file_path
 
 if __name__ == "__main__":
-    data = fetch_weather(50.11, 8.68, "2026-06-01", "2026-09-01")
-    path = save_bronze(data, "frankfurt", "2026-06-01")
+    # data = fetch_weather(50.11, 8.68, "2025-01-01", "2025-12-31")
+    # path = save_bronze(data, "frankfurt", "2025-01-01")
+    data = fetch_weather(41.3888, 2.159, "2025-01-01", "2025-12-31")
+    path = save_bronze(data, "barcelona", "2025-01-01")
     print("saved:", path)

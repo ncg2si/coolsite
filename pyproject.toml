@@ -23,4 +23,11 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "ipykernel>=7.4.0",
+    "pytest>=9.2.0",
 ]
+
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+filterwarnings = ["ignore:PySpark does not yet fully support pandas:FutureWarning"]

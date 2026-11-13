@@ -258,6 +258,7 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
 
 
 if __name__ == "__main__":
-    start = "2026-06-01"
-    end = "2026-09-01"
-    validate(city="frankfurt", start=start, end=end)
+    start = "2025-01-01"
+    end = "2025-12-31"
+    #validate(city="frankfurt", start=start, end=end)
+    validate(city="barcelona", start=start, end=end)
