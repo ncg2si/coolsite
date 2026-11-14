@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.6 (2026-11-14) |
+| Version | 0.6.1 (2026-11-14) |
 | Producer | Open-Meteo Historical Weather API, model pinned to **ERA5-Land** (`models=era5_land`, 0.1° grid) |
 | Consumer | CoolSite pipeline (transform → silver) |
 | Owner | Cam Lai Ngo |
@@ -37,10 +37,10 @@
 | DQ-06 | no nulls in any field (DQ-06a temperature, DQ-06b dew point, DQ-06c humidity) | row | quarantine the row (counts as unusable) |
 | DQ-07 | humidity 0–100 % | row | quarantine the row |
 | DQ-08 | temperature -50 to 55 °C | row | quarantine the row |
-| DQ-09 | dew point ≤ temperature + 0.1 °C tolerance (`DEW_POINT_TOLERANCE_C`) | row | quarantine the row |
+| DQ-09 | dew point ≤ temperature + 0.1 °C tolerance (`DEW_POINT_TOLERANCE_C`); the difference is rounded to 0.1 °C before comparing | row | quarantine the row |
 
 - DQ-08 provisional; refine after profiling extremes (Helsinki January, Athens July)
-- DQ-09 Equality occurs only at 100 % humidity (saturation). The API rounds every value to 0.1 °C, so two rounded values can differ by up to 0.1 °C even when the true values are equal → tolerance 0.1 °C. First case: Stockholm 2024-02-22 04:00, temperature 1.5 °C, dew point 1.6 °C, RH 100 % (185 hours of that year have dew point exactly = temperature). The rule still catches real errors (dew point clearly above temperature).
+- DQ-09 Equality occurs only at 100 % humidity (saturation). The API rounds every value to 0.1 °C, so two rounded values can differ by up to 0.1 °C even when the true values are equal → tolerance 0.1 °C. First case: Stockholm 2024-02-22 04:00, temperature 1.5 °C, dew point 1.6 °C, RH 100 % (185 hours of that year have dew point exactly = temperature). The rule still catches real errors (dew point clearly above temperature). Implementation: `ROUND(dew_point_c - temperature_c, 1) <= 0.1` — without rounding, floating-point arithmetic makes e.g. 0.7 + 0.1 = 0.7999999999999999, so a dew point of exactly 0.8 was wrongly quarantined (seen in Reykjavik 1988-08-16 06:00 and Stockholm 1999-01-04 05:00, both at RH 100 %).
 - The row count is not a rule of its own: if DQ-03, DQ-04 and DQ-05 pass, rows = days × 24 follows. It is logged as `rows_in`.
 - Each problem has exactly one owning rule: edges of the range → DQ-03, duplicates → DQ-04, gaps inside the range → DQ-05.
 - Order: DQ-01 and DQ-02 run first as a gate; if one fails the run stops at once (avoids follow-on errors, e.g. a shifted timezone also breaks DQ-03). Dataset and row rules all run, results are collected and decided together.
@@ -71,3 +71,4 @@
 - 0.4 (2026-11-10): DQ-03 changed from row count to time range (first/last hour), so every problem has one owner; row count only logged; extra hours outside the range → warning + excluded; gate order documented; thresholds and IDs mirrored in src/contract.py (CONTRACT_VERSION)
 - 0.5 (2026-11-13): model pinned to ERA5-Land (`models=era5_land`, 0.1° grid, coordinates snap to the grid); neutral column names in silver (temperature_c, humidity_pct, dew_point_c) via COLUMN_MAP; backfill stored as one bronze file per city × year; DQ-03 adds the one-city-per-file guard; DQ-04 conflicting duplicates → quarantine with rule ID, counted once per hour; DQ-05 off-grid steps reported, runs before duplicate handling; DQ-06 split into a/b/c per field
 - 0.6 (2026-11-14): DQ-09 tolerance 0 → 0.1 °C (API rounding to 0.1 °C); found in the first real quarantine (Stockholm 2024-02-22 04:00: dew point 1.6 °C vs temperature 1.5 °C at RH 100 %); tolerance in src/contract.py as DEW_POINT_TOLERANCE_C
+- 0.6.1 (2026-11-14): DQ-09 implementation fix, rule meaning unchanged: compare the difference rounded to 0.1 °C (floating-point error quarantined values exactly at temperature + 0.1 °C: Reykjavik 1988, Stockholm 1999). Only the two affected city-years were reprocessed; all other silver rows are unaffected by this fix

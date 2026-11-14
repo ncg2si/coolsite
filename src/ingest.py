@@ -13,6 +13,8 @@ CALLS_PER_CITY_YEAR = 365 / 14 * 3 / 10    # ≈ 7.8 weighted calls (3 variables
 DAILY_BUDGET = 9000                       # below the 10,000/day free limit, with a safety margin
 
 
+
+
 log = get_logger(Path(__file__).stem)
 
 URL = "https://archive-api.open-meteo.com/v1/archive"
@@ -57,7 +59,9 @@ def ingest_city_year(city,lat,lon,year):
         return "skipped"
     data = fetch_weather(lat,lon,start,end)
     save_bronze(data,city,start)
-    time.sleep(1) # be polite: at most ~1 request per second
+    #time.sleep(1) # be polite: at most ~1 request per second
+    # limit 5000 calls/hour -> with 7.8 calls/file we get 640 files/hour.  The sleep time between calls should be 3600/640 = 5.6s/file 
+    time.sleep(6)
     log.info(f"{city} {year} loaded")
     return "loaded"
 

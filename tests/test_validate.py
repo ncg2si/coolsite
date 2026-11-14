@@ -119,6 +119,26 @@ def test_humidity_150_goes_to_quarantine_with_dq07(tmp_path, monkeypatch):
     assert valid.count() == 23
     assert "DQ-07" in quarantine.first()["failed_rules"]
 
+def test_dew_point_equal_to_temperature_is_valid(tmp_path, monkeypatch):
+    hourly = good_hourly()
+    hourly["dew_point_2m"][5] = 18.0          # = temperature (RH 100 %)
+    path = write_bronze(tmp_path, hourly)
+    monkeypatch.setattr(validate, "bronze_path", lambda city, start: path)
+    valid, quarantine = validate.validate("testcity", DAY, DAY)
+    assert quarantine.count() == 0
+
+
+def test_dew_point_0_1_above_temperature_is_valid(tmp_path, monkeypatch):
+    hourly = good_hourly()
+    hourly["temperature_2m"][5] = 0.7
+    hourly["dew_point_2m"][5] = 0.8           # exactly temperature + 0.1 (the floating-point case)
+    path = write_bronze(tmp_path, hourly)
+    monkeypatch.setattr(validate, "bronze_path", lambda city, start: path)
+    valid, quarantine = validate.validate("testcity", DAY, DAY)                                        
+    assert quarantine.count() == 0
+
+
+
 
 def test_file_with_several_kinds_of_errors(tmp_path, monkeypatch):
     """One file, four different problems, all within the error budget.

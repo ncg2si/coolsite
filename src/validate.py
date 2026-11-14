@@ -2,6 +2,7 @@ import json
 import warnings
 from datetime import date
 from typing import Literal
+from pathlib import Path
 
 import pyspark.sql.functions as F
 from pyspark.sql import Column, DataFrame, SparkSession
@@ -15,6 +16,9 @@ from contract import (
 )
 from ingest import bronze_path
 from spark_utils import get_spark, read_bronze_hourly
+from utils.log import get_logger
+
+log = get_logger(Path(__file__).stem)
 
 CheckResult = tuple[Literal["error", "warning"], str] | None
 
@@ -206,6 +210,7 @@ def collect(result: CheckResult, problems: list[str], warning_lists: list[str]) 
         problems.append(message)
     elif severity == "warning":
         warning_lists.append(message)
+        log.warning(message)
         warnings.warn(message, UserWarning, stacklevel=2)
     else: 
         raise ValueError(f"Unknown check severity: {severity!r}")
@@ -272,7 +277,7 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
             raise ValueError("Validation failed:\n" + "\n".join(problems))
 
         # 7. SUMMARY: one line, all numbers (the guide asks for this)
-        print(f"{city} {start}: rows_read={n_read} excluded={n_excluded} rows_in={n_in} valid={n_valid} "
+        log.info(f"{city} {start}: rows_read={n_read} excluded={n_excluded} rows_in={n_in} valid={n_valid} "
             f"quarantined={n_total_quarantine} warnings={len(warnings_list)}")
 
         # 8. RETURN

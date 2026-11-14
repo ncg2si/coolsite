@@ -1,6 +1,6 @@
 """Machine-readable part of docs/data_contract.md. Change both together and raise the version."""
 
-CONTRACT_VERSION = "0.6"
+CONTRACT_VERSION = "0.6.1"
 
 WEATHER_MODEL = "era5_land"
 # Structural (DQ-01): fields every bronze file must have
@@ -24,7 +24,7 @@ ROW_RULES = {
     "DQ-06c": "humidity_pct IS NOT NULL",
     "DQ-07":  "humidity_pct BETWEEN 0 AND 100",
     "DQ-08":  "temperature_c BETWEEN -50 AND 55",   # provisional, see contract
-    "DQ-09":  f"dew_point_c <= temperature_c + {DEW_POINT_TOLERANCE_C}",      # DEW_POINT_TOLERANCE_C °C tolerance
+    "DQ-09":  f"ROUND(dew_point_c - temperature_c,1)<= {DEW_POINT_TOLERANCE_C}",      # DEW_POINT_TOLERANCE_C °C tolerance
 }
 
 # Severity policy (contract section 3)
