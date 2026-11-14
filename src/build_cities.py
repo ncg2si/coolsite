@@ -38,5 +38,5 @@ if __name__ == "__main__":
     cities["lat"] = cities["lat"].round(2)
     cities["lon"] = cities["lon"].round(2)
     cities[["climate_class","climate_description"]] = cities.apply( lambda row: climate(row["lat"],row["lon"]),axis = 1, result_type= "expand")
-   
+    cities.to_csv(CITIES_FILE,index=False)
     print(cities)

@@ -1,4 +1,24 @@
-city,name,country
-frankfurt,Frankfurt,DE
-barcelona,Barcelona,ES
-stockholm,Stockholm,SE
+city,name,country,group,region,regulatory_zone,active,tier,reason
+frankfurt,Frankfurt,DE,FLAP-D,western_europe,EU,true,project,reference city; largest German hub; EnEfG PUE caps apply
+london,London,GB,FLAP-D,northern_europe,non-EU,true,project,FLAP-D baseline; long grid connection waits; outside EU reporting
+amsterdam,Amsterdam,NL,FLAP-D,western_europe,EU,true,project,FLAP-D baseline; temporary moratorium on new data centres (2019)
+paris,Paris,FR,FLAP-D,western_europe,EU,true,project,FLAP-D baseline; major market
+dublin,Dublin,IE,FLAP-D,northern_europe,EU,true,project,FLAP-D baseline; data centres use about 20 % of Ireland's electricity
+stockholm,Stockholm,SE,challenger,northern_europe,EU,true,project,established market; cold; district heating for waste heat
+helsinki,Helsinki,FI,challenger,northern_europe,EU,true,project,cold; waste-heat reuse in district heating
+copenhagen,Copenhagen,DK,challenger,northern_europe,EU,true,project,mild maritime; close to central Europe
+lulea,Luleå,SE,challenger,northern_europe,EU,true,project,far north; very cold; Meta outside-air cooling site
+oslo,Oslo,NO,challenger,northern_europe,EEA,true,project,hydropower; cold
+reykjavik,Reykjavik,IS,challenger,northern_europe,EEA,true,project,extremely cool; remote
+madrid,Madrid,ES,challenger,southern_europe,EU,true,project,fast-growing market; hot and dry (pair with Milan)
+barcelona,Barcelona,ES,challenger,southern_europe,EU,true,project,coastal; humid summers
+lisbon,Lisbon,PT,challenger,southern_europe,EU,true,project,Atlantic; milder than Madrid; subsea cables
+milan,Milan,IT,challenger,southern_europe,EU,true,project,growing market; humid Po valley (pair with Madrid)
+marseille,Marseille,FR,challenger,western_europe,EU,true,project,subsea cable hub; Mediterranean
+athens,Athens,GR,challenger,southern_europe,EU,true,project,hot; emerging market
+berlin,Berlin,DE,challenger,western_europe,EU,true,project,second German market; EnEfG applies like Frankfurt
+warsaw,Warsaw,PL,challenger,eastern_europe,EU,true,project,emerging market; continental
+vienna,Vienna,AT,challenger,western_europe,EU,true,project,emerging market; hot summers
+brussels,Brussels,BE,challenger,western_europe,EU,true,project,close to FLAP-D
+prague,Prague,CZ,challenger,eastern_europe,EU,true,project,continental
+zurich,Zurich,CH,challenger,western_europe,non-EU,true,project,established secondary market; outside the EU
