@@ -46,7 +46,7 @@ def write_partitioned(df: DataFrame, path: str) -> None:
         .parquet(path)
 )
 
-def run(city: str, start: str, end: str) -> None:
+def transform_city_year(city: str, start: str, end: str) -> None:
     run_id = make_run_id(city,start)
     t0 = time.perf_counter()
     log.info(f"[{run_id}] run started: {city} {start} -> {end}")
@@ -66,5 +66,5 @@ def run(city: str, start: str, end: str) -> None:
         get_spark().catalog.clearCache()
 if __name__ == "__main__":
     #run("frankfurt","2025-01-01", "2025-12-31")
-    run("barcelona","2025-01-01", "2025-12-31")
+    transform_city_year("barcelona","2025-01-01", "2025-12-31")
 

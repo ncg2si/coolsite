@@ -1,0 +1,28 @@
+from ingest import load_cities, ingest_city_year, CALLS_PER_CITY_YEAR, DAILY_BUDGET
+from transform import transform_city_year 
+from aggregate import build_gold 
+from pathlib import Path
+from utils.log import get_logger
+
+log = get_logger(Path(__file__).stem)
+
+def run_pipeline(cities, years):
+    calls_used = 0
+    for row in cities.itertuples():
+        for year in years:
+            if calls_used + CALLS_PER_CITY_YEAR > DAILY_BUDGET:
+                log.info(f"daily budget reached ({calls_used:.0f} calls) -> stop, run again tomorrow")
+                build_gold()
+                return
+            status = ingest_city_year(row.city, row.lat, row.lon, year)
+            if status == "loaded":
+                calls_used += CALLS_PER_CITY_YEAR
+            transform_city_year(row.city, f"{year}-01-01", f"{year}-12-31")
+    log.info(f"pipeline finished: {calls_used:.0f} API calls used")
+    build_gold()
+
+
+if __name__ == "__main__":
+    cities = load_cities()
+    test_cities = cities.head(5)
+    run_pipeline(test_cities, [2024, 2025])

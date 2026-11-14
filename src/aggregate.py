@@ -27,7 +27,7 @@ def add_mode_share (counts):
 log = get_logger(Path(__file__).stem)
 
 
-def run():
+def build_gold():
     t0 = time.perf_counter()
     log.info("gold run started")
     silver = None
@@ -49,6 +49,6 @@ def run():
             silver.unpersist()
             
 if __name__ == "__main__":
-    run()
+    build_gold()
     
     

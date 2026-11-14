@@ -69,6 +69,7 @@ Last reviewed 2026-11-10. Grouped by topic; the newest decision wins, superseded
 
 - (2026-11-14) **Cities reference table**: `data/seed/city_list.csv` is maintained by hand (city slug, name, country; later group, region (UN M49 subregion, e.g. western_europe), regulatory_zone, active, tier, reason). `src/build_cities.py` generates `data/seed/cities.csv` from it: lat/lon/timezone/country_name from the Open-Meteo Geocoding API (based on GeoNames — attribution required) and the Köppen class + description. `cities.csv` is generated, never edited by hand. One file for all cities; `tier` (project / extended) + `active` decide what gets loaded — no separate world list, no large background harvesting during the capstone.
 - (2026-11-14) **Climate zone**: Köppen-Geiger class from Beck et al. (2023), Scientific Data, doi 10.1038/s41597-023-02549-6, period 1991–2020 only (current WMO reference period), 0.1° map to match the ERA5-Land grid. Raster files in `data/reference/` (not in Git). Climate change is shown with own data (free-cooling hours 1961–2026), not with Köppen shifts.
+- (2026-11-14) **DQ-09 tolerance 0.1 °C** (contract v0.6): first real quarantine (Stockholm 2024, dew point 0.1 °C above temperature at RH 100 %) was API rounding, not bad data. Chose a documented tolerance instead of repairing values; values in silver stay as delivered.
 - (2026-11-14) **API budget**: weighted calls = days/14 × variables/10 per location (confirmed with the calculator on open-meteo.com/en/pricing). 3 variables × 1 year ≈ 7.8 calls; 23 cities × 1961–2026 ≈ 12,000 calls ≈ 2 days at 10,000/day → ingest must be resumable (skip existing files) with a daily budget. Bulk ERA5-Land (Copernicus CDS) only as the scaling path (hundreds of locations / gridded maps), not for 23 points.
 
 ### Engine and platform
@@ -99,6 +100,9 @@ Fibre, permits, community, electricity prices, land; per-facility PUE/WUE/ERF/RE
 - [ ] Data exercise: correlation between free-cooling hours and wet-bulb hours across the 23 cities
 
 ### Backlog (parked 2026-11-10 — not before the thin slice runs)
+- [ ] Quarantine gap: dynamic overwrite does not clear an old quarantine partition when a rerun has 0 quarantine rows (seen with Stockholm 2024 after contract v0.6) → for now delete the partition by hand before reprocessing
+- [ ] Atomic bronze write (write to a temp file, then rename) so an interrupted run never leaves a half-written JSON that skip-if-exists would keep
+- [ ] Reprocessing after a contract change: a way to force transform for existing silver partitions (now: delete data/silver + data/quarantine, rerun — bronze is reused, no API calls)
 - [ ] Coordinate check in the gate: file latitude/longitude vs cities.csv, with tolerance (grid snapping) — new structural rule → contract v0.5
 - [ ] Which Open-Meteo model is used (ERA5 vs ERA5-Land, `models` parameter) → write into the contract; sets the tolerance above
 - [ ] DQ-03 city guard: currently can't fail (city comes from F.lit) → keep as safety net or move to the gate

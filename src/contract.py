@@ -1,6 +1,6 @@
 """Machine-readable part of docs/data_contract.md. Change both together and raise the version."""
 
-CONTRACT_VERSION = "0.5"
+CONTRACT_VERSION = "0.6"
 
 WEATHER_MODEL = "era5_land"
 # Structural (DQ-01): fields every bronze file must have
@@ -17,13 +17,14 @@ EXPECT_TIMEZONE = "GMT"
 
 # Row rules (DQ-06..09): SQL condition a VALID row must satisfy.
 # A row that breaks one or more rules is quarantined with the rule IDs.
+DEW_POINT_TOLERANCE_C = 0.1     # API values are rounded to 0.1 °C
 ROW_RULES = {
     "DQ-06a": "temperature_c IS NOT NULL",
     "DQ-06b": "dew_point_c IS NOT NULL",
     "DQ-06c": "humidity_pct IS NOT NULL",
     "DQ-07":  "humidity_pct BETWEEN 0 AND 100",
     "DQ-08":  "temperature_c BETWEEN -50 AND 55",   # provisional, see contract
-    "DQ-09":  "dew_point_c <= temperature_c",      # 0 °C tolerance
+    "DQ-09":  f"dew_point_c <= temperature_c + {DEW_POINT_TOLERANCE_C}",      # DEW_POINT_TOLERANCE_C °C tolerance
 }
 
 # Severity policy (contract section 3)
