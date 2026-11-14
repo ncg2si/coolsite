@@ -13,6 +13,7 @@ dependencies = [
     "plotly>=7.1.0",
     "pyarrow>=26.0.1",
     "pyspark>=4.3.0",
+    "rasterio>=1.5.2",
     "requests>=2.34.2",
 ]
 

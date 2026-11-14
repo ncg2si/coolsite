@@ -8,3 +8,12 @@ SILVER = DATA / "silver"
 QUARANTINE = DATA / "quarantine"
 GOLD = DATA / "gold" / "cooling_modes"
 LOGS = PROJECT_ROOT / "logs"
+
+# climate classification
+KOPPEN_DIR = DATA / "reference" / "koppen" / "koppen_geiger_tif"
+LEGEND_FILE = KOPPEN_DIR/ "legend.txt"
+KOPPEN_TIF = KOPPEN_DIR / "1991_2020" / "koppen_geiger_0p1.tif"
+
+# seed
+CITIES_FILE = DATA / "seed" / "cities.csv"
+CITY_LIST_FILE = DATA / "seed" / "city_list.csv"
