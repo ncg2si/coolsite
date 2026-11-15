@@ -10,7 +10,7 @@ from paths import BRONZE, CITIES_FILE
 from utils.log import get_logger
 
 CALLS_PER_CITY_YEAR = 365 / 14 * 3 / 10    # ≈ 7.8 weighted calls (3 variables, 1 year)
-DAILY_BUDGET = 9000                       # below the 10,000/day free limit, with a safety margin
+DAILY_BUDGET = 9000                       # below the 10,000/day free limit, with a safety margin 
 
 
 
@@ -46,8 +46,8 @@ def save_bronze(data: dict, city: str, start: str) -> Path:
     return file_path
 
 
-def load_cities():
-    cities = pd.read_csv(CITIES_FILE)
+def load_cities(path=CITIES_FILE):
+    cities = pd.read_csv(path)
     return cities[cities["active"] == True]
 
 

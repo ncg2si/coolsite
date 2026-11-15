@@ -11,6 +11,7 @@ def get_spark() -> SparkSession:
             .master("local[*]")
             .config("spark.sql.session.timeZone", "UTC")
             .config("spark.sql.shuffle.partitions", "8")
+            .config("spark.driver.memory", "4g")
             .getOrCreate()
     )
 def read_bronze_hourly(spark: SparkSession, path: str, city: str) -> DataFrame:

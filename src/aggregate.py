@@ -7,7 +7,8 @@ from pyspark.sql import functions as F
 from spark_utils import get_spark
 from classify import classify, DEFAULT_PARAMS
 from utils.log import get_logger
-from paths import SILVER, GOLD
+from paths import SILVER, GOLD 
+from contract import MIN_COVERAGE_CITY_YEAR
  
 
 def count_modes(silver,design):
@@ -21,7 +22,15 @@ def add_mode_share (counts):
     return joined.withColumn("mode_share", F.col("hours")/F.col("total_hours"))
 
 
-
+def add_coverage(df):
+    """Add expected_hours, coverage, incomplete per row 
+    needs columns year, total_hours
+    """
+    expected_hours = F.datediff(F.make_date(F.col("year")+1, F.lit(1),F.lit(1)), F.make_date(F.col("year"), F.lit(1),F.lit(1)))*24
+    return(df.withColumn("expected_hours",expected_hours)
+            .withColumn("coverage",F.col("total_hours")/F.col("expected_hours"))
+            .withColumn("incomplete", F.col("coverage") < MIN_COVERAGE_CITY_YEAR)           
+           )
 
 
 log = get_logger(Path(__file__).stem)
@@ -35,9 +44,9 @@ def build_gold():
         spark = get_spark()
         silver = spark.read.parquet(str(SILVER)).cache()
         all_modes = count_modes(silver,"direct").unionByName(count_modes(silver,"indirect"))
-        gold = (add_mode_share(all_modes)
+        gold = (add_coverage(add_mode_share(all_modes)
                 .withColumn("params",F.lit(json.dumps(DEFAULT_PARAMS)))
-                .withColumn("processed_at", F.current_timestamp()))
+                .withColumn("processed_at", F.current_timestamp())))
         gold.coalesce(1).write.mode("overwrite").parquet(str(GOLD))
         log.info(f"gold written: {gold.count()} rows")
         log.info(f"gold run finished: SUCCESS ({time.perf_counter()- t0:.1f} s)")

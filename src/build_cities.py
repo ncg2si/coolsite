@@ -1,4 +1,4 @@
-from paths import CITY_LIST_FILE, CITIES_FILE,  LEGEND_FILE, KOPPEN_TIF
+from paths import CITY_LIST_FILE, CITIES_FILE,  LEGEND_FILE, KOPPEN_TIF, CITIES_GLOBAL_FILE, CITY_LIST_GLOBAL_FILE
 
 import requests
 
@@ -29,14 +29,18 @@ def climate(lat,lon):
         return None,None
 
 
-
-if __name__ == "__main__":
-    cities = pd.read_csv(CITY_LIST_FILE)
-    #print(geocode("frankfurt","DE"))
+def build(input_path, output_path):
+    
+    cities = pd.read_csv(input_path)
     columns = ["lat","lon","timezone","country_name"]
     cities[columns] = cities.apply(lambda row: geocode(row["name"],row["country"]),axis = 1, result_type= "expand")
     cities["lat"] = cities["lat"].round(2)
     cities["lon"] = cities["lon"].round(2)
     cities[["climate_class","climate_description"]] = cities.apply( lambda row: climate(row["lat"],row["lon"]),axis = 1, result_type= "expand")
-    cities.to_csv(CITIES_FILE,index=False)
-    print(cities)
+    cities.to_csv(output_path,index=False)
+
+
+if __name__ == "__main__":
+
+    #build(CITY_LIST_FILE,CITIES_FILE)
+    build(CITY_LIST_GLOBAL_FILE,CITIES_GLOBAL_FILE)

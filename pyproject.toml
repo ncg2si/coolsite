@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "geopandas>=1.2.0",
     "nbformat>=5.11.1",
     "pandas>=3.1.0",
     "plotly>=7.1.0",

@@ -17,3 +17,6 @@ KOPPEN_TIF = KOPPEN_DIR / "1991_2020" / "koppen_geiger_0p1.tif"
 # seed
 CITIES_FILE = DATA / "seed" / "cities.csv"
 CITY_LIST_FILE = DATA / "seed" / "city_list.csv"
+
+CITY_LIST_GLOBAL_FILE = DATA / "seed" / "city_list_global.csv"
+CITIES_GLOBAL_FILE = DATA / "seed" / "cities_global.csv"

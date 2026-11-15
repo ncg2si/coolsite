@@ -66,5 +66,5 @@ def transform_city_year(city: str, start: str, end: str) -> None:
         get_spark().catalog.clearCache()
 if __name__ == "__main__":
     #run("frankfurt","2025-01-01", "2025-12-31")
-    transform_city_year("barcelona","2025-01-01", "2025-12-31")
+    transform_city_year("berlin","1979-01-01", "1979-12-31")
 
