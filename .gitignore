@@ -16,6 +16,7 @@ data/bronze/
 data/silver/
 data/gold/
 data/quarantine/
+data/staging/
 
 # Private notes and working documents (not part of the project documentation)
 docs/private/

@@ -8,7 +8,7 @@ from pyspark.sql import functions as F
 from contract import CONTRACT_VERSION, WEATHER_MODEL
 from spark_utils import get_spark
 from utils.log import get_logger
-from paths import SILVER, QUARANTINE
+from paths import SILVER, QUARANTINE, STAGING
 from utils.wetbulb import wet_bulb_stull
 from validate import validate
 
@@ -46,6 +46,26 @@ def write_partitioned(df: DataFrame, path: str) -> None:
         .parquet(path)
 )
 
+def upsert_silver(new: DataFrame, city: str, year: int)-> None:
+    """New rows win on (city,time), other rows of (city,year) partition are kept
+    Writes via a staging folder: Spark cannot overwrite a path it is reading in the same plan
+    """    
+    spark = get_spark()
+    in_partition =  (F.col("city") == city) & (F.col("year") == year )  
+
+    # existing rows of this partition (empty DataFrame if the partition does not exist)
+    existing = spark.read.parquet(str(SILVER)).filter(in_partition)
+    # keep old rows whose keys (city,time) are not in the new data:
+    kept_old = existing.join(new.select("city","time"), on= ["city","time"],how= "left_anti")
+    # merge with all new rows
+    merged = kept_old.unionByName(new)
+    # write to staging
+    staging = STAGING / "silver"
+    write_partitioned(merged,str(staging))
+    # copy this partition from staging to silver
+    write_partitioned(spark.read.parquet(str(staging)).filter(in_partition),str(SILVER))
+
+
 def transform_city_year(city: str, start: str, end: str) -> None:
     run_id = make_run_id(city,start)
     t0 = time.perf_counter()
@@ -54,10 +74,17 @@ def transform_city_year(city: str, start: str, end: str) -> None:
         valid, quarantine = validate(city, start, end)
         n_valid, n_quarantine = valid.count(), quarantine.count()
         log.info(f"[{run_id}] validate done: valid = {n_valid} quarantine = {n_quarantine}")
-        write_partitioned(to_silver(valid, run_id), str(SILVER))
+        year = int(start[:4])
+        upsert_silver(to_silver(valid, run_id), city, year)
         log.info(f"[{run_id}] silver written: {n_valid} rows")
-        write_partitioned(quarantine.withColumn("year",F.year(F.col("time"))), str(QUARANTINE))
-        log.info(f"[{run_id}] quarantine written: {n_quarantine} rows")
+        (quarantine.withColumn("year",F.year(F.col("time")))
+                .withColumn("run_id",F.lit(run_id))
+                .withColumn("processed_at",F.current_timestamp())
+                .write.mode("append")
+                .partitionBy("city","year")
+                .parquet(str(QUARANTINE)))
+        
+        log.info(f"[{run_id}] quarantine appended: {n_quarantine} rows")
         log.info(f"[{run_id}] run finished: SUCCESS ({time.perf_counter() - t0:.1f} s)")
     except Exception:
         log.exception(f"[{run_id}] run FAILED")

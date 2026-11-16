@@ -8,6 +8,7 @@ SILVER = DATA / "silver"
 QUARANTINE = DATA / "quarantine"
 GOLD = DATA / "gold" / "cooling_modes"
 LOGS = PROJECT_ROOT / "logs"
+STAGING = DATA / "staging"
 
 # climate classification
 KOPPEN_DIR = DATA / "reference" / "koppen" / "koppen_geiger_tif"

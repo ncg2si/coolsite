@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from paths import BRONZE
 
-DRY_RUN = False
+DRY_RUN = True
 
 for old in sorted(BRONZE.glob("city=*/*.json")):
     if "__fetched_" in old.name:
