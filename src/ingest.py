@@ -3,6 +3,7 @@ from pathlib import Path
 import requests
 import pandas as pd
 import time
+from datetime import datetime, timezone
 
 from contract import WEATHER_MODEL
 from paths import BRONZE, CITIES_FILE
@@ -10,7 +11,7 @@ from paths import BRONZE, CITIES_FILE
 from utils.log import get_logger
 
 CALLS_PER_CITY_YEAR = 365 / 14 * 3 / 10    # ≈ 7.8 weighted calls (3 variables, 1 year)
-DAILY_BUDGET = 9000                       # below the 10,000/day free limit, with a safety margin 
+DAILY_BUDGET = 9000                       # below the 10,000/day free limit, with a safety margin
 
 
 
@@ -34,16 +35,28 @@ def fetch_weather(lat: float, lon: float, start: str, end: str) -> dict:
     response.raise_for_status()
     return response.json()
 
-def bronze_path(city: str, start: str) -> Path:
-    """The path to bronze file"""
-    return BRONZE / f"city={city.lower()}" / f"{start}.json"    
+def new_bronze_path(city: str, start: str, end: str, fetched_at: datetime):
+    stamp = fetched_at.strftime("%Y%m%dT%H%M%SZ")
+    return BRONZE / f"city={city.lower()}" / f"{start}_{end}__fetched_{stamp}.json"
 
-def save_bronze(data: dict, city: str, start: str) -> Path:
+
+def latest_bronze_path(city: str,start: str,end: str) -> Path:
+    "Newest bronze file for this time window, or None"
+    files = sorted ((BRONZE / f"city={city.lower()}").glob(f"{start}_{end}__fetched_*.json"))
+    if not files:
+        return None
+    return files[-1]
+
+
+def save_bronze(data: dict, city: str, start: str, end: str) -> Path:
     """Save the raw response unchanged to the bronze layer."""
-    file_path = bronze_path(city, start)
+    fetched_at = datetime.now(timezone.utc)
+    file_path = new_bronze_path(city, start, end, fetched_at)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(json.dumps(data,indent=2))
     return file_path
+
+
 
 
 def load_cities(path=CITIES_FILE):
@@ -51,14 +64,15 @@ def load_cities(path=CITIES_FILE):
     return cities[cities["active"] == True]
 
 
-def ingest_city_year(city,lat,lon,year):
+def ingest_city_year(city: str,lat: float,lon: float,year: str):
     start, end = f"{year}-01-01", f"{year}-12-31"
-    path = bronze_path(city,start)
-    if path.exists():
+    #path = bronze_path(city,start)
+    #if path.exists():
+    if latest_bronze_path(city,start,end) is not None:
         log.info(f"{city} {year}: already in bronze -> skipped")
         return "skipped"
     data = fetch_weather(lat,lon,start,end)
-    save_bronze(data,city,start)
+    save_bronze(data,city,start,end)
     #time.sleep(1) # be polite: at most ~1 request per second
     # limit 5000 calls/hour -> with 7.8 calls/file we get 640 files/hour.  The sleep time between calls should be 3600/640 = 5.6s/file 
     time.sleep(6)

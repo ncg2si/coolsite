@@ -56,7 +56,7 @@ def write_bronze(tmp_path, hourly, timezone="GMT"):
 def run_validate(tmp_path, monkeypatch, hourly):
     """Write the fake file, point validate() at it, run it for one day."""
     path = write_bronze(tmp_path, hourly)
-    monkeypatch.setattr(validate, "bronze_path", lambda city, start: path)
+    monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
     return validate.validate("frankfurt", DAY, DAY)
 
 
@@ -123,7 +123,7 @@ def test_dew_point_equal_to_temperature_is_valid(tmp_path, monkeypatch):
     hourly = good_hourly()
     hourly["dew_point_2m"][5] = 18.0          # = temperature (RH 100 %)
     path = write_bronze(tmp_path, hourly)
-    monkeypatch.setattr(validate, "bronze_path", lambda city, start: path)
+    monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
     valid, quarantine = validate.validate("testcity", DAY, DAY)
     assert quarantine.count() == 0
 
@@ -133,7 +133,7 @@ def test_dew_point_0_1_above_temperature_is_valid(tmp_path, monkeypatch):
     hourly["temperature_2m"][5] = 0.7
     hourly["dew_point_2m"][5] = 0.8           # exactly temperature + 0.1 (the floating-point case)
     path = write_bronze(tmp_path, hourly)
-    monkeypatch.setattr(validate, "bronze_path", lambda city, start: path)
+    monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
     valid, quarantine = validate.validate("testcity", DAY, DAY)                                        
     assert quarantine.count() == 0
 

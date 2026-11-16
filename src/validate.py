@@ -14,7 +14,7 @@ from contract import (
     MAX_UNUSABLE_HOURS_PER_FILE,
     ROW_RULES,
 )
-from ingest import bronze_path
+from ingest import latest_bronze_path
 from spark_utils import get_spark, read_bronze_hourly
 from utils.log import get_logger
 
@@ -41,9 +41,8 @@ def parse_date_range(start: str, end: str) -> tuple[date, date]:
         raise ValueError(f"start date {start} is after end date {end}")
     return start_d, end_d
 
-def load_bronze(city:str, start:str) -> dict:
+def load_bronze(path: Path) -> dict:
     """Read one bronze file and return the raw API dict"""
-    path = bronze_path(city,start)
     return json.loads(path.read_text())
 
 def inclusive_days(start:str, end:str) -> int:
@@ -224,7 +223,10 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
     """Run all DQ checks on one bronze file. Return (valid rows, quarantined rows)."""
     start_d, end_d = parse_date_range(start,end)
     start, end = start_d.isoformat(), end_d.isoformat()   # luôn là "2025-12-31"
-    data = load_bronze(city, start)
+    path = latest_bronze_path(city, start, end)
+    if path is None:
+        raise FileNotFoundError(f"no bronze file for {city} {start}...{end}")
+    data = load_bronze(path)
     hourly = data["hourly"]
     problems, warnings_list = [], []
 
@@ -235,7 +237,8 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
         raise ValueError("Schema gate failed, other checks skipped:\n" + "\n".join(problems))
     # 2. SPARK READ (only after the gate)
     spark = get_spark()
-    raw = read_bronze_hourly(spark, str(bronze_path(city, start)), city).cache()
+    
+    raw = read_bronze_hourly(spark, str(path), city).cache()
     # 3. DATASET RULES (DQ-03 on the full data, then drop the out-of-range rows)
     try:
         n_read = raw.count()                                     # all rows from bronze (for the balance check)
