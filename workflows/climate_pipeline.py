@@ -65,8 +65,8 @@ def run_pipeline(cities, years, daily_budget = DAILY_BUDGET, ingest_only = False
 
 
 if __name__ == "__main__":
-    cities = load_cities() #default Europe
-    #cities = load_cities(CITIES_GLOBAL_FILE)
+    #cities = load_cities() #default Europe
+    cities = load_cities(CITIES_GLOBAL_FILE)
     years = range(1961, 2026)           # 1961 … 2025
     failures = run_pipeline(cities, years,daily_budget= 5000, ingest_only= True)
     if failures:

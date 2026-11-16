@@ -84,8 +84,16 @@ cities (reference table, planned: data/seed/cities.csv) ── joins on `city` w
 - Classification logic in one module (`classify.py`); parameters stored with gold for reproducibility.
 
 ## 6. Open / to do (Cami)
-- [ ] coverage per city-year (valid ÷ expected hours, `incomplete` flag if < 99.9 %) — not yet in gold
+- [x] coverage per city-year (`expected_hours`, `coverage`, `incomplete` if < 99.9 %) — in gold since 2026-11-15 (`add_coverage`, tested)
 - [ ] zero-hour modes (e.g. no `hybrid` row for Barcelona direct) — needed as 0 for the scatter
 - [ ] degree-hours columns (`water_degree_hours`, `chiller_degree_hours`) — plan §3d
 - [ ] cities table: columns final, source for coordinates
 - [ ] diagram as image for the README / presentation
+- [ ] gold as a **star schema** (planned 2026-11-16) — shows dimensional modelling on our own data:
+  - `fact_cooling_hours`: grain city × year × design × mode; measures `hours`, `mode_share`, `coverage`, `incomplete` (later degree-hours)
+  - `dim_city`: one row per city, Europe + global merged (`cities.csv` + `cities_global.csv`): lat/lon, timezone, country, region, `tier` (project / global), `group` (FLAP-D, challenger, established, emerging), climate class, water stress (later)
+  - `dim_design`: `direct` / `indirect` + parameters (A, dew limits, ε, T_return) instead of the `params` JSON string
+  - `dim_year` (optional): year, decade, period label (e.g. 1961–1970 / 2016–2025)
+  - joins: fact.city → dim_city.city, fact.design → dim_design.design; small dims → broadcast join
+  - dashboard default filter `tier = project` (Europe), global as an option
+
