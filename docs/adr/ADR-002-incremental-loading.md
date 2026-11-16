@@ -40,6 +40,38 @@ Accepted — 2026-11-15
 | 4 | Boundaries | year change handled by `split_by_year`; leap years via date arithmetic; times are UTC (no DST issue) |
 | 5 | Scale / Databricks | ~67 small files per day (23 + 44 cities); Auto Loader sees each file once |
 
+## How it works — walk-through (Berlin)
+
+![Daily incremental flow](../figures/12_incremental_flow.png)
+
+**Backfill vs incremental**
+| | Backfill (done, 1961–2025) | Incremental (from 2026) |
+|---|---|---|
+| Loop | city × year | city only |
+| `start`, `end` | fixed: `YYYY-01-01`, `YYYY-12-31` | computed from the watermark and today |
+
+**Daily steps per city**
+1. Watermark = `max(time)` in silver (Berlin after backfill: 2025-12-31 23:00). No data yet → start = 1961-01-01 (a new city is simply a backfill).
+2. `start` = watermark − 7 days; `end` = today − 5 days.
+3. `split_by_year(start, end)` → chunks that each stay inside one year.
+4. Per chunk: fetch → new bronze file (`<start>_<end>__fetched_<UTC>.json`) → validate (bad rows → quarantine) → upsert into the silver year partition (key `(city, time)`, new wins).
+5. After all cities: rebuild gold (coverage flags the running year as incomplete).
+6. The watermark moves forward by itself, because it is read from silver — only after a successful write.
+
+![Sliding fetch windows](../figures/13_incremental_windows.png)
+
+**Example dates**
+| Run | Watermark | Fetch window | Chunks |
+|---|---|---|---|
+| 16 Nov 2026 (first) | 2025-12-31 | 2025-12-24 → 2026-11-11 | [2025-12-24 → 12-31] (lookback, partition 2025) · [2026-01-01 → 11-11] |
+| 17 Nov 2026 | 2026-11-11 | 2026-11-04 → 11-12 | 1 |
+| 18 Nov 2026 | 2026-11-12 | 2026-11-05 → 11-13 | 1 |
+
+Each day the window slides by one day: 7 days are re-fetched (ERA5T corrections), 1 day is new.
+
+**Reading bronze:** `start`/`end` say *which window*, `fetched_` says *which version*. `latest_bronze_path(city, start, end)` returns the newest file for exactly that window (re-runs of the same window). Overlapping windows with different ends are reconciled in silver, not in bronze.
+Backlog: *replay* — rebuild silver from all bronze files of a year, ordered by `fetched_`.
+
 ## Gaps covered elsewhere
 - Gap at the end of the data → watermark (this ADR).
 - Whole city-year missing in silver → `silver_exists(city, year)` in the pipeline.
@@ -54,8 +86,8 @@ Accepted — 2026-11-15
 - The current year (2026) will be flagged `incomplete` in gold until the year is over — intended.
 
 ## Implementation order
-1. Stop all running ingests; commit.
-2. Rename script: dry run (print old → new), review, then rename with `mv -n`.
-3. Code: `bronze_path(city, start, end, fetched_at)`, glob-based existence check, transform reads newest file.
+1. ✅ Stop all running ingests; commit.
+2. ✅ Rename script (`scripts/rename_bronze.py`): dry run, review, rename (2,410 files, 2026-11-15/16; skips files already renamed → safe to rerun).
+3. 🟡 Code: `new_bronze_path(city, start, end, fetched_at)` for writing, `latest_bronze_path(city, start, end)` (glob, newest) for reading; ingest existence check; validate reads the newest file; tests updated.
 4. Check: rerun the European pipeline → must skip all 1,495 files (no download).
 5. Then: `fetch_window`, `split_by_year` (+ tests), `upsert_silver` (anti-join), incremental run mode.
