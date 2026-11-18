@@ -14,7 +14,10 @@ CALLS_PER_CITY_YEAR = 365 / 14 * 3 / 10    # ≈ 7.8 weighted calls (3 variables
 DAILY_BUDGET = 9000                       # below the 10,000/day free limit, with a safety margin
 
 
-
+RETRY_WAITS = [10, 30, 60]
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+class QuotaExhausted(Exception):
+    """Daily or monthly API limit reached; Retrying today is pointless"""
 
 log = get_logger(Path(__file__).stem)
 
@@ -31,9 +34,31 @@ def fetch_weather(lat: float, lon: float, start: str, end: str) -> dict:
         "models": WEATHER_MODEL,
         "timezone": "GMT",
     }
-    response = requests.get(url=URL, params=params, timeout=60)
-    response.raise_for_status()
-    return response.json()
+    last_error = None
+    for attempt, wait in enumerate([0] + RETRY_WAITS):
+        if wait:
+            log.warning(f"retry {attempt}/{len(RETRY_WAITS)} in {wait} s ({last_error}) ")
+            time.sleep(wait)
+        try:
+            response = requests.get(url=URL, params=params, timeout=60)
+            if response.status_code == 429:
+                try:
+                    reason = response.json().get("reason","")
+                except ValueError: 
+                    reason = ""
+                if "Daily" in reason or "Monthly" in reason:
+                    raise QuotaExhausted(reason) #not an HTTP error -> not caught below
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if e.response.status_code not in RETRYABLE_STATUS:
+                raise # e.g. 400 Bad request -> retrying is pointless
+            last_error = e
+        except (requests.ConnectionError, requests.Timeout) as e: 
+            last_error = e
+    raise last_error #all 4 attempts failed
+
+    
 
 def new_bronze_path(city: str, start: str, end: str, fetched_at: datetime):
     stamp = fetched_at.strftime("%Y%m%dT%H%M%SZ")
@@ -64,6 +89,7 @@ def api_cost(start: str, end: str, n_vars: int = 3) -> float:
     """Weighted Open-Meteo calls: days/14 x variables/10, at least 1."""
     days = (date.fromisoformat(end) - date.fromisoformat(start)).days + 1
     return max(1.0, days / 14 * n_vars / 10)
+
 
 def ingest_window(city:str, lat: float, lon: float, start: str, end:str) -> str:
     """Fetch one window into a NEW bronze file. Skip if a file for this window exists."""

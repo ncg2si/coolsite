@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from aggregate import build_gold
-from ingest import load_cities, ingest_city_year, CALLS_PER_CITY_YEAR, DAILY_BUDGET
+from ingest import load_cities, ingest_city_year, CALLS_PER_CITY_YEAR, DAILY_BUDGET, QuotaExhausted
 from paths import SILVER, CITIES_GLOBAL_FILE
 from transform import transform_city_year
 from utils.log import get_logger
@@ -35,6 +35,11 @@ def run_pipeline(cities, years, daily_budget = DAILY_BUDGET, ingest_only = False
             try:
                 status = ingest_city_year(row.city, row.lat, row.lon, year)
                 ingest_errors_in_a_row = 0
+            except QuotaExhausted as err:
+                log.error(f"API quota exhausted ({err}) -> stop, run again tomorrow")
+                if not ingest_only:
+                    build_gold()
+                return failures
             except Exception:
                 log.exception(f"{row.city} {year}: ingest FAILED -> skipped, continue")
                 failures.append(f"{row.city} {year} (ingest)")

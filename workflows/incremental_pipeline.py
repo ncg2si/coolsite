@@ -4,7 +4,7 @@ from datetime import date
 
 from aggregate import build_gold
 from incremental import fetch_window, split_by_year,get_watermarks
-from ingest import load_cities, ingest_city_year, api_cost, ingest_window
+from ingest import load_cities, api_cost, ingest_window, QuotaExhausted
 from paths import SILVER
 from transform import transform_city_year
 from utils.log import get_logger
@@ -36,6 +36,10 @@ def run_incremental(cities, today: date, daily_budget: float =5000) -> list[str]
             try:
                 status = ingest_window(row.city,row.lat,row.lon,s,e)
                 errors_in_a_row = 0
+            except QuotaExhausted as err:
+                log.error(f"API quote exhausted ({err}) -> stop, run again tomorrow")
+                build_gold()
+                return failures
             except Exception:
                 log.exception(f"{row.city} {s}..{e}: ingest FAILED -> skipped")
                 failures.append(f"{row.city} {s}..{e} (ingest)")

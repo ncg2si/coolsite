@@ -33,3 +33,5 @@ notebooks/
 CLAUDE.md
 
 data/reference/
+# demo data for failure demo
+demo_data/

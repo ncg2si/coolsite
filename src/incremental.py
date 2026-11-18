@@ -28,15 +28,13 @@ def split_by_year(start: date, end: date) -> list[tuple[date,date]]:
 
 def get_watermarks(spark) -> dict:
     """Latest hour in silver per city: {city: datetime}. Cities without data are not in the dict."""
+    if not SILVER.exists():
+        return {}
     rows = (spark.read.parquet(str(SILVER))
             .groupBy("city")
             .agg(F.max("time").cast("timestamp_ntz").alias("watermark")) # cast to no time zone to use the session timezone
             .collect())
     return {r["city"]: r["watermark"] for r in rows}
-
-
-
-
 
 
 if __name__ == "__main__":

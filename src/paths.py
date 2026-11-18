@@ -1,8 +1,12 @@
 from pathlib import Path
+import os
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]   # src/paths.py → parents[0] = src, parents[1] = coolsite
 
-DATA = PROJECT_ROOT / "data"
+
+DATA = Path(os.environ.get("COOLSITE_DATA", PROJECT_ROOT / "data")) # if no env var COOLSITE_DATA use data as the directory
+
+
 BRONZE = DATA / "bronze"
 SILVER = DATA / "silver"
 QUARANTINE = DATA / "quarantine"

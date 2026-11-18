@@ -52,13 +52,16 @@ def upsert_silver(new: DataFrame, city: str, year: int)-> None:
     """    
     spark = get_spark()
     in_partition =  (F.col("city") == city) & (F.col("year") == year )  
-
-    # existing rows of this partition (empty DataFrame if the partition does not exist)
-    existing = spark.read.parquet(str(SILVER)).filter(in_partition)
-    # keep old rows whose keys (city,time) are not in the new data:
-    kept_old = existing.join(new.select("city","time"), on= ["city","time"],how= "left_anti")
-    # merge with all new rows
-    merged = kept_old.unionByName(new)
+    partition_dir = SILVER / f"city={city}" / f"year={year}"
+    if partition_dir.exists():
+        # existing rows of this partition (empty DataFrame if the partition does not exist)
+        existing = spark.read.parquet(str(SILVER)).filter(in_partition)
+        # keep old rows whose keys (city,time) are not in the new data:
+        kept_old = existing.join(new.select("city","time"), on= ["city","time"],how= "left_anti")
+        # merge with all new rows
+        merged = kept_old.unionByName(new)
+    else:
+        merged = new
     # write to staging
     staging = STAGING / "silver"
     write_partitioned(merged,str(staging))

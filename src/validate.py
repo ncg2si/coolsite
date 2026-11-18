@@ -23,9 +23,6 @@ log = get_logger(Path(__file__).stem)
 CheckResult = tuple[Literal["error", "warning"], str] | None
 
 
-
-
-
 def parse_date_range(start: str, end: str) -> tuple[date, date]:
     """Check that start/end are real dates (YYYY-MM-DD) and start <= end.
     Raises ValueError with a clear message otherwise."""
