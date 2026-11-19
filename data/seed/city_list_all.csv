@@ -1,0 +1,107 @@
+city,name,country,admin1,region,cw_region,regulatory_zone,scope,my_group,cw2026_tier,cw2026_rank,active,reason
+frankfurt,Frankfurt,DE,,western_europe,EMEA,EU,project,FLAP-D,,,True,reference city; largest German hub; EnEfG PUE caps apply
+london,London,GB,,northern_europe,EMEA,non-EU,project,FLAP-D,,,True,FLAP-D baseline; long grid connection waits; outside EU reporting
+amsterdam,Amsterdam,NL,,western_europe,EMEA,EU,project,FLAP-D,,,True,FLAP-D baseline; temporary moratorium on new data centres (2019)
+paris,Paris,FR,,western_europe,EMEA,EU,project,FLAP-D,primary,10.0,True,FLAP-D baseline; major market
+dublin,Dublin,IE,,northern_europe,EMEA,EU,project,FLAP-D,,,True,FLAP-D baseline; data centres use about 20 % of Ireland's electricity
+stockholm,Stockholm,SE,,northern_europe,EMEA,EU,project,challenger,primary,6.0,True,established market; cold; district heating for waste heat
+helsinki,Helsinki,FI,,northern_europe,EMEA,EU,project,challenger,primary,1.0,True,cold; waste-heat reuse in district heating
+copenhagen,Copenhagen,DK,,northern_europe,EMEA,EU,project,challenger,secondary,5.0,True,mild maritime; close to central Europe
+lulea,Luleå,SE,,northern_europe,EMEA,EU,project,challenger,,,True,far north; very cold; Meta outside-air cooling site
+oslo,Oslo,NO,,northern_europe,EMEA,EEA,project,challenger,primary,2.0,True,hydropower; cold
+reykjavik,Reykjavik,IS,,northern_europe,EMEA,EEA,project,challenger,secondary,1.0,True,extremely cool; remote
+madrid,Madrid,ES,,southern_europe,EMEA,EU,project,challenger,primary,5.0,True,fast-growing market; hot and dry (pair with Milan)
+barcelona,Barcelona,ES,,southern_europe,EMEA,EU,project,challenger,tertiary,6.0,True,coastal; humid summers
+lisbon,Lisbon,PT,,southern_europe,EMEA,EU,project,challenger,,,True,Atlantic; milder than Madrid; subsea cables
+milan,Milan,IT,,southern_europe,EMEA,EU,project,challenger,primary,4.0,True,growing market; humid Po valley (pair with Madrid)
+marseille,Marseille,FR,,western_europe,EMEA,EU,project,challenger,tertiary,1.0,True,subsea cable hub; Mediterranean
+athens,Athens,GR,,southern_europe,EMEA,EU,project,challenger,secondary,3.0,True,hot; emerging market
+berlin,Berlin,DE,,western_europe,EMEA,EU,project,challenger,,,True,second German market; EnEfG applies like Frankfurt
+warsaw,Warsaw,PL,,eastern_europe,EMEA,EU,project,challenger,,,True,emerging market; continental
+vienna,Vienna,AT,,western_europe,EMEA,EU,project,challenger,secondary,2.0,True,emerging market; hot summers
+brussels,Brussels,BE,,western_europe,EMEA,EU,project,challenger,tertiary,7.0,True,close to FLAP-D
+prague,Prague,CZ,,eastern_europe,EMEA,EU,project,challenger,tertiary,4.0,True,continental
+zurich,Zurich,CH,,western_europe,EMEA,non-EU,project,challenger,primary,9.0,True,established secondary market; outside the EU
+ashburn,Ashburn,US,Virginia,northern_america,Americas,non-EU,outlook,,primary,3.0,True,C&W 2025 Americas established #1 (Virginia); point = Ashburn (Northern Virginia)
+phoenix,Phoenix,US,,northern_america,Americas,non-EU,outlook,,primary,6.0,True,C&W 2025 Americas established #2; hot desert climate
+dallas,Dallas,US,,northern_america,Americas,non-EU,outlook,,primary,1.0,True,C&W 2025 Americas established #3
+atlanta,Atlanta,US,,northern_america,Americas,non-EU,outlook,,primary,2.0,True,C&W 2025 Americas established #4; humid subtropical
+hillsboro,Hillsboro,US,Oregon,northern_america,Americas,non-EU,outlook,,primary,7.0,True,C&W 2025 Americas established #5 (Oregon); point = Hillsboro
+columbus,Columbus,US,Ohio,northern_america,Americas,non-EU,outlook,,primary,4.0,True,C&W 2025 Americas established #6; check geocode = Ohio
+salt_lake_city,Salt Lake City,US,,northern_america,Americas,non-EU,outlook,,secondary,4.0,True,C&W 2025 Americas established #7; dry climate
+chicago,Chicago,US,,northern_america,Americas,non-EU,outlook,,primary,5.0,True,C&W 2025 Americas established #8
+charlotte,Charlotte,US,North Carolina,northern_america,Americas,non-EU,outlook,,secondary,2.0,True,C&W 2025 Americas established #9 (Carolinas); point = Charlotte (assumption)
+sao_paulo,São Paulo,BR,,south_america,Americas,non-EU,outlook,,,,True,C&W 2025 Americas established #10
+san_antonio,San Antonio,US,,northern_america,Americas,non-EU,outlook,,secondary,1.0,True,C&W 2025 Americas emerging #1 (Austin/San Antonio)
+des_moines,Des Moines,US,Iowa,northern_america,Americas,non-EU,outlook,,tertiary,2.0,True,C&W 2025 Americas emerging #2 (Iowa); point = Des Moines (assumption)
+harrisburg,Harrisburg,US,Pennsylvania,northern_america,Americas,non-EU,outlook,,,,True,C&W 2025 Americas emerging #3 (Pennsylvania); point = Harrisburg (assumption); check geocode = PA
+reno,Reno,US,,northern_america,Americas,non-EU,outlook,,secondary,3.0,True,C&W 2025 Americas emerging #4
+minneapolis,Minneapolis,US,,northern_america,Americas,non-EU,outlook,,secondary,6.0,True,C&W 2025 Americas emerging #5; cold continental
+kansas_city,Kansas City,US,Missouri,northern_america,Americas,non-EU,outlook,,tertiary,6.0,True,C&W 2025 Americas emerging #6; check geocode = Missouri
+nashville,Nashville,US,,northern_america,Americas,non-EU,outlook,,,,True,C&W 2025 Americas emerging #7
+indianapolis,Indianapolis,US,,northern_america,Americas,non-EU,outlook,,,,True,C&W 2025 Americas emerging #8
+wenatchee,Wenatchee,US,Washington,northern_america,Americas,non-EU,outlook,,tertiary,9.0,True,C&W 2025 Americas emerging #9 (Central Washington); point = Wenatchee (assumption)
+santiago,Santiago,CL,,south_america,Americas,non-EU,outlook,,secondary,10.0,True,C&W 2025 Americas emerging #10
+beijing,Beijing,CN,,eastern_asia,APAC,non-EU,outlook,,primary,7.0,True,C&W 2025 APAC established #1
+shanghai,Shanghai,CN,,eastern_asia,APAC,non-EU,outlook,,primary,3.0,True,C&W 2025 APAC established #2
+sydney,Sydney,AU,,australia_new_zealand,APAC,non-EU,outlook,,primary,2.0,True,C&W 2025 APAC established #3; southern hemisphere
+johor_bahru,Johor Bahru,MY,,south_eastern_asia,APAC,non-EU,outlook,,primary,1.0,True,C&W 2025 APAC established #4 (Johor); tropical humid
+melbourne,Melbourne,AU,,australia_new_zealand,APAC,non-EU,outlook,,primary,4.0,True,C&W 2025 APAC established #5; southern hemisphere
+guangzhou,Guangzhou,CN,,eastern_asia,APAC,non-EU,outlook,,secondary,5.0,True,C&W 2025 APAC established #6; humid subtropical
+mumbai,Mumbai,IN,,southern_asia,APAC,non-EU,outlook,,primary,5.0,True,C&W 2025 APAC established #7; tropical monsoon
+osaka,Osaka,JP,,eastern_asia,APAC,non-EU,outlook,,,,True,C&W 2025 APAC established #8
+seoul,Seoul,KR,,eastern_asia,APAC,non-EU,outlook,,primary,10.0,True,C&W 2025 APAC established #9
+singapore,Singapore,SG,,south_eastern_asia,APAC,non-EU,outlook,,,,True,C&W 2025 APAC established #10; tropical humid all year
+auckland,Auckland,NZ,,australia_new_zealand,APAC,non-EU,outlook,,secondary,6.0,True,C&W 2025 APAC emerging #1; southern hemisphere
+brisbane,Brisbane,AU,,australia_new_zealand,APAC,non-EU,outlook,,tertiary,4.0,True,C&W 2025 APAC emerging #2; southern hemisphere
+busan,Busan,KR,,eastern_asia,APAC,non-EU,outlook,,tertiary,8.0,True,C&W 2025 APAC emerging #3
+pune,Pune,IN,,southern_asia,APAC,non-EU,outlook,,secondary,4.0,True,C&W 2025 APAC emerging #4
+bengaluru,Bengaluru,IN,,southern_asia,APAC,non-EU,outlook,,tertiary,3.0,True,C&W 2025 APAC emerging #5; check geocode (also Bangalore)
+perth,Perth,AU,,australia_new_zealand,APAC,non-EU,outlook,,tertiary,6.0,True,C&W 2025 APAC emerging #6; southern hemisphere
+canberra,Canberra,AU,,australia_new_zealand,APAC,non-EU,outlook,,tertiary,1.0,True,C&W 2025 APAC emerging #7; southern hemisphere
+taipei,Taipei,TW,,eastern_asia,APAC,non-EU,outlook,,secondary,7.0,True,C&W 2025 APAC emerging #8
+batam,Batam,ID,,south_eastern_asia,APAC,non-EU,outlook,,tertiary,2.0,True,C&W 2025 APAC emerging #9; tropical humid
+hanoi,Hanoi,VN,,south_eastern_asia,APAC,non-EU,outlook,,tertiary,7.0,True,C&W 2025 APAC emerging #10
+johannesburg,Johannesburg,ZA,,southern_africa,EMEA,non-EU,outlook,,,,True,C&W 2025 EMEA established #10; southern hemisphere; high altitude
+abu_dhabi,Abu Dhabi,AE,,western_asia,EMEA,non-EU,outlook,,primary,3.0,True,C&W 2025 EMEA emerging #1; hot desert + humid coast
+dubai,Dubai,AE,,western_asia,EMEA,non-EU,outlook,,primary,8.0,True,C&W 2025 EMEA emerging #2; hot desert + humid coast
+tel_aviv,Tel Aviv,IL,,western_asia,EMEA,non-EU,outlook,,,,True,C&W 2025 EMEA emerging #10
+calgary,Calgary,CA,Alberta,northern_america,Americas,non-EU,outlook,,tertiary,10.0,True,C&W 2026 included market (Alberta; new in 2026); point = Calgary (assumption)
+bogota,Bogotá,CO,,south_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market; high-altitude tropical
+boston,Boston,US,Massachusetts,northern_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market; check geocode = Massachusetts
+cheyenne,Cheyenne,US,Wyoming,northern_america,Americas,non-EU,outlook,,tertiary,7.0,True,C&W 2026 included market (new in 2026); dry cold high plains
+fargo,Fargo,US,North Dakota,northern_america,Americas,non-EU,outlook,,tertiary,5.0,True,C&W 2026 included market (Dakotas; new in 2026); point = Fargo (assumption); check geocode = North Dakota
+denver,Denver,US,Colorado,northern_america,Americas,non-EU,outlook,,secondary,9.0,True,C&W 2026 included market; dry continental
+houston,Houston,US,Texas,northern_america,Americas,non-EU,outlook,,tertiary,3.0,True,C&W 2026 included market (new in 2026); hot humid
+las_vegas,Las Vegas,US,Nevada,northern_america,Americas,non-EU,outlook,,secondary,7.0,True,C&W 2026 included market; hot desert; check geocode = Nevada
+los_angeles,Los Angeles,US,California,northern_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market
+montreal,Montreal,CA,,northern_america,Americas,non-EU,outlook,,secondary,5.0,True,C&W 2026 included market; cold; hydropower
+new_york,New York,US,New York,northern_america,Americas,non-EU,outlook,,primary,9.0,True,C&W 2026 included market (NY-Northern NJ); point = New York (assumption)
+oklahoma_city,Oklahoma City,US,Oklahoma,northern_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market (new in 2026)
+omaha,Omaha,US,Nebraska,northern_america,Americas,non-EU,outlook,,secondary,8.0,True,C&W 2026 included market (new in 2026); check geocode = Nebraska
+queretaro,Querétaro,MX,,central_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market; highland semi-arid
+seattle,Seattle,US,Washington,northern_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market; mild maritime
+santa_clara,Santa Clara,US,California,northern_america,Americas,non-EU,outlook,,primary,10.0,True,C&W 2026 included market (Silicon Valley); point = Santa Clara (assumption); check geocode = California
+amarillo,Amarillo,US,Texas,northern_america,Americas,non-EU,outlook,,tertiary,8.0,True,C&W 2026 included market (Texas Panhandle; new in 2026); point = Amarillo (assumption)
+toronto,Toronto,CA,,northern_america,Americas,non-EU,outlook,,primary,8.0,True,C&W 2026 included market
+vancouver,Vancouver,CA,British Columbia,northern_america,Americas,non-EU,outlook,,,,True,C&W 2026 included market; mild maritime
+abilene,Abilene,US,Texas,northern_america,Americas,non-EU,outlook,,tertiary,1.0,True,C&W 2026 included market (West Texas; new in 2026); point = Abilene (assumption); check geocode = Texas
+bangkok,Bangkok,TH,,south_eastern_asia,APAC,non-EU,outlook,,primary,9.0,True,C&W 2026 included market; tropical humid
+chennai,Chennai,IN,,southern_asia,APAC,non-EU,outlook,,secondary,2.0,True,C&W 2026 included market; hot humid coast; subsea cables
+new_delhi,New Delhi,IN,,southern_asia,APAC,non-EU,outlook,,secondary,3.0,True,C&W 2026 included market (Delhi NCR); point = New Delhi (assumption)
+ho_chi_minh_city,Ho Chi Minh City,VN,,south_eastern_asia,APAC,non-EU,outlook,,tertiary,5.0,True,C&W 2026 included market; tropical humid
+hong_kong,Hong Kong,HK,,eastern_asia,APAC,non-EU,outlook,,,,True,C&W 2026 included market (Hong Kong SAR); humid subtropical
+hyderabad,Hyderabad,IN,Telangana,southern_asia,APAC,non-EU,outlook,,secondary,1.0,True,C&W 2026 included market; check geocode = India (Telangana)
+jakarta,Jakarta,ID,,south_eastern_asia,APAC,non-EU,outlook,,primary,8.0,True,C&W 2026 included market; tropical humid
+kuala_lumpur,Kuala Lumpur,MY,,south_eastern_asia,APAC,non-EU,outlook,,primary,6.0,True,C&W 2026 included market; tropical humid
+manila,Manila,PH,,south_eastern_asia,APAC,non-EU,outlook,,tertiary,9.0,True,C&W 2026 included market; tropical humid
+tokyo,Tokyo,JP,,eastern_asia,APAC,non-EU,outlook,,,,True,C&W 2026 included market; largest APAC market
+dammam,Dammam,SA,,western_asia,EMEA,non-EU,outlook,,secondary,4.0,True,C&W 2026 included market; hot desert coast
+doha,Doha,QA,,western_asia,EMEA,non-EU,outlook,,tertiary,2.0,True,C&W 2026 included market; hot desert coast
+istanbul,Istanbul,TR,,western_asia,EMEA,non-EU,outlook,,tertiary,5.0,True,C&W 2026 included market; between Europe and Asia
+jeddah,Jeddah,SA,,western_asia,EMEA,non-EU,outlook,,tertiary,3.0,True,C&W 2026 included market; hot humid coast
+lagos,Lagos,NG,,western_africa,EMEA,non-EU,outlook,,secondary,7.0,True,C&W 2026 included market; tropical humid
+munich,Munich,DE,,western_europe,EMEA,EU,outlook,,tertiary,8.0,True,C&W 2026 included market; European (candidate for the European set)
+nairobi,Nairobi,KE,,eastern_africa,EMEA,non-EU,outlook,,tertiary,9.0,True,C&W 2026 included market; high-altitude mild
+riyadh,Riyadh,SA,,western_asia,EMEA,non-EU,outlook,,secondary,6.0,True,C&W 2026 included market; hot desert
+zaragoza,Zaragoza,ES,,southern_europe,EMEA,EU,outlook,,primary,7.0,True,C&W 2026 included market; European; semi-arid; water stress Ebro (candidate for the European set)
