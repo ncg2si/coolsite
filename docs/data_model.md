@@ -1,6 +1,6 @@
 # CoolSite – data model
 
-Draft created 2026-11-13, star schema designed 2026-11-20. Covers the guide's "Data modelling" requirement: purpose, grain, keys and relationships of every table. Field rules and quality checks: see `data_contract.md`.
+Purpose, grain, keys and relationships of every table. Star schema designed 2026-11-20. Field rules and quality checks: see `data_contract.md`.
 
 Status legend: ✅ built · 🟡 seed file exists, not yet wired into the pipeline · ⬜ planned
 
@@ -275,7 +275,7 @@ One row = one cooling mode. Seed: `data/seed/dim_mode.csv`.
 | referential integrity | every key in a fact exists in its dimension (catches e.g. `"chiller "` with a trailing space) |
 | balance | per city × year × scenario: `SUM(hours)` in `fact_cooling_hours` = `total_hours` in `fact_city_year` |
 
-## 7. Open / to do (Cami)
+## 7. Open items
 - [x] coverage per city-year — in gold since 2026-11-15 (`add_coverage`, tested); moves to `fact_city_year`
 - [x] star schema designed (2026-11-20)
 - [x] seeds `dim_mode.csv`, `dim_scenario.csv` (2026-11-20)

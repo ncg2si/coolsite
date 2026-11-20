@@ -2,8 +2,8 @@
 
 > Free cooling, water or chillers? A climate pipeline for European data-centre siting.
 
-Status: business requirements DRAFT v4 (short version, same structure as `CoolSite_capstone_idea.pdf`) · Last updated: 2026-11-10
-Details (full research notes, dated decision log, open items, all sources): [capstone_details.md](capstone_details.md) · Data quality: [data_contract.md](data_contract.md)
+Business requirements · Last updated: 2026-11-20
+City selection: [cities.md](cities.md) · Data model: [data_model.md](data_model.md) · Data quality: [data_contract.md](data_contract.md)
 
 > **Key question:** Does a city's climate let a data centre save electricity, save water — or both?
 
@@ -11,7 +11,7 @@ CoolSite takes hourly weather data (ERA5 reanalysis via the Open-Meteo API, from
 
 <img src="figures/07_study_area_map_reasons.png" alt="CoolSite study area: 5 FLAP-D hubs vs 18 challenger cities" width="1200">
 
-*Study area (current draft): 5 FLAP-D hubs + 18 challenger cities. The city list is not final — see section 8.*
+*Study area: 5 FLAP-D hubs + 18 challenger cities. Selection rule: [cities.md](cities.md).*
 
 ## 1. The problem
 
@@ -24,6 +24,8 @@ Regulation puts numbers on this: Germany's Energy Efficiency Act (EnEfG) caps PU
 **Questions CoolSite answers**
 - Does this city's climate let a data centre save electricity, save water — or both?
 - How has this balance changed from 1961–1990 to today?
+
+Saving water matters most where water is scarce. CoolSite therefore adds each city's **water stress** (WRI Aqueduct 4.0): the same evaporative hours weigh more in Madrid than in Oslo.
 
 **User:** a company deciding where to build a new data centre (site-selection team).
 
@@ -104,7 +106,14 @@ Evaporative cooling can only bring air down **towards the wet-bulb temperature**
 
 <img src="figures/04_same_temperature_different_answer.png" alt="Same 30 °C, different answer" width="800">
 
-## 7. Pipeline and technology
+## 7. Water stress: a second, different data source
+
+- **What:** baseline water stress per river basin from WRI Aqueduct 4.0, annual and monthly, on a 0–5 scale.
+- **How:** static reference data, loaded once. Each city point is joined to the river basin it lies in (spatial join) and the result is stored in `dim_city`. A deliberate contrast to the daily weather time series.
+- **Why it matters in practice:** operators assess water risk at site selection. Equinix committed in 2023 to avoid evaporative cooling in areas with high water stress; Google chose air cooling for its Mesa (Arizona) site because the local water source was at high risk of depletion.
+- **Limit:** a screening indicator at river-basin scale, not a local water-utility assessment.
+
+## 8. Pipeline and technology
 
 | Layer | What happens |
 |---|---|
@@ -116,10 +125,10 @@ Evaporative cooling can only bring air down **towards the wet-bulb temperature**
 
 **Engine and platform**
 - **PySpark + Spark SQL**, built and tested **locally first** (guaranteed, gradable fallback), then migrated to **Azure Databricks** (plan B: Databricks Free Edition) — same engine, no rewrite.
-- **Why Databricks and Azure:** the choice follows the **job-market requirements in the Stuttgart region**, where data-engineering roles frequently ask for Databricks, Azure and PySpark.
+- **Why Databricks and Azure:** Databricks on Azure is the state of the art for data engineering in the Stuttgart region. Technically, it fits the pipeline's operation rather than its size: **Delta Lake `MERGE`** for safe, idempotent upserts of late and corrected data; **Unity Catalog** for access control and lineage; **scheduled jobs** that do not depend on a laptop; one governed place the dashboard reads from.
 - Portability rules: logic separate from I/O, all paths and thresholds in config, secrets only in environment variables, Git from the start.
 
-## 8. Status: decided, open, out of scope
+## 9. Status: decided, open, out of scope
 
 **Decided**
 - Core: hourly cooling-mode classification (free / evaporative / chiller)
@@ -128,14 +137,15 @@ Evaporative cooling can only bring air down **towards the wet-bulb temperature**
 - Metrics as shares of valid hours, with coverage
 - Data contract v0.4 with quarantine and error budget
 - Local PySpark first → Azure Databricks
+- City list: 23 European cities (project) + 83 global cities (outlook); rule in [cities.md](cities.md)
+- Scenario parameters and their sources: [data_model.md](data_model.md) (`dim_scenario`)
+- Water stress (WRI Aqueduct 4.0) as a second, static data source in `dim_city`
 
 **Still open**
-- **City list:** the 23 cities are a draft — the selection can still be narrowed, broadened or scaled (inclusion rule pending)
-- **Scope:** can grow (more cities, climate projections to 2050, extra layers such as grid waiting time or water stress) or shrink to fit the timeline
+- **Scope:** can grow (more cities, climate projections to 2050, grid waiting time as an extra layer) or shrink to fit the timeline
 - Source and method for the wet-bulb threshold B
-- Sources for return-air temperature and cooler effectiveness
 - MVP size: start with 3 cities (Frankfurt + 1 cold + 1 hot), then scale
 
 **Out of scope:** grid waiting time, electricity prices, fibre, permits, land; per-facility PUE/WUE (confidential). CoolSite answers the **climate** part of the siting decision; grid waiting time is a candidate future layer.
 
-**Main sources:** Banque de France Eco Notepad 470 (2026) · IEA *Energy and AI* (2025) · ASHRAE TC 9.9 Thermal Guidelines (2016) · EU Reg. 2024/1364 · EnEfG § 11 · Park & Seo (2018) · Stull (2011) · CBRE Global Data Center Trends 2026 · Condair (2014). Full list with links: [capstone_details.md](capstone_details.md#e-sources).
+**Main sources:** Banque de France Eco Notepad 470 (2026) · IEA *Energy and AI* (2025) · ASHRAE TC 9.9 Thermal Guidelines (2016) · EU Reg. 2024/1364 · EnEfG § 11 · Park & Seo (2018) · Stull (2011) · CBRE Global Data Center Trends 2026 · Condair (2014) · WRI Aqueduct 4.0 (Kuzma et al. 2023) · Equinix, *How data centers use water* (2024) · Google Cloud, *Assessing watershed health in data center host communities* (2023).
