@@ -54,6 +54,61 @@ Facts hold keys and measures; dimensions hold descriptions. Measures that are ra
 | `dim_scenario` | dimension | one cooling scenario (design + parameter set) | scenario | `data/seed/dim_scenario.csv` | 🟡 |
 | `dim_mode` | dimension | one cooling mode | mode | `data/seed/dim_mode.csv` | 🟡 |
 
+### ER diagram (gold)
+
+```mermaid
+erDiagram
+    dim_city     ||--o{ fact_cooling_hours : city
+    dim_year     ||--o{ fact_cooling_hours : year
+    dim_scenario ||--o{ fact_cooling_hours : scenario
+    dim_mode     ||--o{ fact_cooling_hours : mode
+    dim_city     ||--o{ fact_city_year     : city
+    dim_year     ||--o{ fact_city_year     : year
+
+    fact_cooling_hours {
+        string city PK
+        int    year PK
+        string scenario PK
+        string mode PK
+        long   hours
+        double water_degree_hours
+        double chiller_degree_hours
+    }
+    fact_city_year {
+        string city PK
+        int    year PK
+        long   total_hours
+        long   expected_hours
+        boolean incomplete
+    }
+    dim_city {
+        string city PK
+        string name
+        string country
+        double lat
+        double lon
+        double bws_annual_score
+    }
+    dim_year {
+        int    year PK
+        string decade
+        string reference_period
+    }
+    dim_scenario {
+        string  scenario PK
+        string  design
+        boolean evap_assist
+        double  A
+    }
+    dim_mode {
+        string  mode PK
+        boolean uses_water
+        boolean uses_chiller
+    }
+```
+
+`||--o{` = one row in the dimension, zero or many rows in the fact. Only the main columns are shown; full column lists in §4.
+
 ## 3. Relationships
 
 - bronze → silver: one bronze file produces the silver rows of one city-year partition (via `validate` + `transform`, upsert on city + time). Hours that fail a rule go to quarantine instead.
@@ -230,5 +285,5 @@ One row = one cooling mode. Seed: `data/seed/dim_mode.csv`.
 - [ ] `dim_city`: `iso3`, Aqueduct join (`pfaf_id`, annual water stress, months ≥ 4) as a script → seed
 - [ ] `dim_year`
 - [ ] star-schema tests (§6)
-- [ ] ER diagram (mermaid `erDiagram`) for the README / presentation
+- [x] ER diagram (mermaid `erDiagram`) in §2 (2026-11-20)
 - [ ] extensions: scenarios `no_water` (free + chiller only) and `liquid_w40`; threshold slider via a temperature histogram (A only)
