@@ -39,3 +39,7 @@ demo_data/
 
 data/seed/bkup/
 docs/capstone_details.md
+data/seed/cities_global.csv
+data/seed/cities.csv
+data/seed/cities_list.csv
+data/seed/cities_list_global.csv
