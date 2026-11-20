@@ -35,3 +35,6 @@ CLAUDE.md
 data/reference/
 # demo data for failure demo
 demo_data/
+.vscode/
+
+data/seed/bkup/

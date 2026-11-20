@@ -20,8 +20,14 @@ LEGEND_FILE = KOPPEN_DIR/ "legend.txt"
 KOPPEN_TIF = KOPPEN_DIR / "1991_2020" / "koppen_geiger_0p1.tif"
 
 # seed
-CITIES_FILE = DATA / "seed" / "cities.csv"
+#FLAP-D plus challenger cities -> Group 1
+CITIES_FILE = DATA / "seed" / "cities.csv" 
 CITY_LIST_FILE = DATA / "seed" / "city_list.csv"
 
-CITY_LIST_GLOBAL_FILE = DATA / "seed" / "city_list_global.csv"
+#global without group 1 
 CITIES_GLOBAL_FILE = DATA / "seed" / "cities_global.csv"
+CITY_LIST_GLOBAL_FILE = DATA / "seed" / "city_list_global.csv"
+
+#all cities from 2026 report, categorized in tiers 1-2-3 
+CITIES_ALL_FILE = DATA / "seed" / "cities_all.csv"
+CITIES_LIST_ALL = DATA / "seed" / "city_list_all.csv"

@@ -64,7 +64,7 @@ def test_no_2027_chunk_on_3_january():
 
 
 def test_first_2027_chunk_on_8_january():
-    """8 Jan − 7 days = 1 Jan → the first 2027 chunk appears."""
+    """8 Jan - 7 days = 1 Jan → the first 2027 chunk appears."""
     start, end = fetch_window(datetime(2026, 12, 31, 23, 0), date(2027, 1, 8))
     chunks = split_by_year(start, end)
     assert chunks[-1] == (date(2027, 1, 1), date(2027, 1, 1))

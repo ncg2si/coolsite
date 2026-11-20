@@ -3,7 +3,7 @@ from pathlib import Path
 
 from aggregate import build_gold
 from ingest import load_cities, ingest_city_year, CALLS_PER_CITY_YEAR, DAILY_BUDGET, QuotaExhausted
-from paths import SILVER, CITIES_GLOBAL_FILE
+from paths import SILVER, CITIES_GLOBAL_FILE, CITIES_ALL_FILE
 from transform import transform_city_year
 from utils.log import get_logger
 
@@ -71,7 +71,8 @@ def run_pipeline(cities, years, daily_budget = DAILY_BUDGET, ingest_only = False
 
 if __name__ == "__main__":
     #cities = load_cities() #default Europe
-    cities = load_cities(CITIES_GLOBAL_FILE)
+    #cities = load_cities(CITIES_GLOBAL_FILE)
+    cities = load_cities(CITIES_ALL_FILE) # global
     years = range(1961, 2026)           # 1961 … 2025
     failures = run_pipeline(cities, years,daily_budget= 5000, ingest_only= True)
     if failures:
