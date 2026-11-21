@@ -231,6 +231,7 @@ Derived in code, not stored in the seed: `threshold_a` (= A for direct; T_return
 | scenario | design | evap_assist | A | dew_max | dew_min | eps_evap | eps_hx | T_return |
 |---|---|---|---|---|---|---|---|---|
 | air_direct | direct | true | 27 | 15 | −9 | 0.8 | – | – |
+| air_direct_no_hybrid | direct | false | 27 | 15 | −9 | 0.8 | – | – |
 | air_indirect | indirect | true | 27 | – | – | 0.8 | 0.7 | 37 |
 | air_indirect_no_hybrid | indirect | false | 27 | – | – | 0.8 | 0.7 | 37 |
 
@@ -260,7 +261,7 @@ One row = one cooling mode. Seed: `data/seed/dim_mode.csv`.
 | chiller | Chiller cooling | false | true | #F18F49 | 4 |
 
 ## 5. Design decisions (short)
-- **Two direct scenarios were identical → one dropped** (2026-11-21). With the ASHRAE recommended dew-point limit (15 °C), the humidity limit always binds before evaporative cooling runs out: 0 hybrid hours in the direct design for all 23 cities, 1961–2026. Every direct chiller hour is humidity-limited. `air_direct_no_hybrid` gave the same result as `air_direct` and was removed. `evap_assist` stays as a column: it matters for the indirect design, and could matter for direct with a wider dew-point limit.
+- **Direct design in Europe: humidity, not heat, forces the chiller on** (2026-11-21). With the ASHRAE recommended dew-point limit (15 °C), the humidity limit always binds before evaporative cooling runs out: 0 hybrid hours in the direct design for all 23 project cities, 1961–2026, so `air_direct` and `air_direct_no_hybrid` give the same result there. Both are kept: in very hot, dry outlook cities (e.g. Riyadh, Dubai, Phoenix) evaporative cooling alone may not be enough even with dry air, so hybrid hours can occur – to verify once their silver data is complete.
 - **Indirect: evaporative assist removes the pure chiller** (2026-11-21). `air_indirect` has 0 pure-chiller hours; `air_indirect_no_hybrid` turns the same hours into chiller hours (997 of 1,518 city-years). Both indirect scenarios are kept.
 - Time stored in UTC; local time only for hour-of-day views (timezone from `dim_city`).
 - Silver: incremental upsert on city + time via a staging folder (ADR-002); Delta MERGE on Databricks later.
