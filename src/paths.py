@@ -31,3 +31,7 @@ CITY_LIST_GLOBAL_FILE = DATA / "seed" / "city_list_global.csv"
 #all cities from 2026 report, categorized in tiers 1-2-3 
 CITIES_ALL_FILE = DATA / "seed" / "cities_all.csv"
 CITIES_LIST_ALL = DATA / "seed" / "city_list_all.csv"
+
+# dimension scenario
+
+SCENARIOS_FILE = DATA / "seed" / "dim_scenario.csv"

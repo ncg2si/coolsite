@@ -41,5 +41,5 @@ data/seed/bkup/
 docs/capstone_details.md
 data/seed/cities_global.csv
 data/seed/cities.csv
-data/seed/cities_list.csv
-data/seed/cities_list_global.csv
+data/seed/city_list.csv
+data/seed/city_list_global.csv

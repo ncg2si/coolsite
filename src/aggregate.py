@@ -1,24 +1,32 @@
-
-import json
 import time
 from pathlib import Path
 from pyspark.sql import functions as F
+import pandas as pd
 
 from spark_utils import get_spark
-from classify import classify, DEFAULT_PARAMS
+from classify import classify
 from utils.log import get_logger
-from paths import SILVER, GOLD 
+from paths import SILVER, GOLD, SCENARIOS_FILE
 from contract import MIN_COVERAGE_CITY_YEAR
  
+def load_scenarios() -> list:
+    return pd.read_csv(SCENARIOS_FILE).to_dict(orient='records')
 
-def count_modes(silver,design):
-    classified = classify(silver, design)
-    return classified.groupBy("city","year","design","mode").agg(F.count("*").alias("hours"))
+
+def count_modes(silver,scenario):
+    classified = classify(silver,scenario["design"] ,scenario)
+    classified = classified.withColumn("scenario",F.lit(scenario["scenario"]))
+    return (classified.groupBy("city","year","scenario","mode")
+                .agg(F.count("*").alias("hours"),
+                     F.sum("water_degree").alias("water_degree_hours"),
+                     F.sum("chiller_degree").alias("chiller_degree_hours"),
+                     F.sum(F.col("humidity_limited").cast('int')).alias("humidity_limited_hours")
+                     ))
 
 
 def add_mode_share (counts):
-    totals = counts.groupBy("city","year","design").agg(F.sum("hours").alias("total_hours"))
-    joined = counts.join(totals, on = ["city","year","design"])
+    totals = counts.groupBy("city","year","scenario").agg(F.sum("hours").alias("total_hours"))
+    joined = counts.join(totals, on = ["city","year","scenario"])
     return joined.withColumn("mode_share", F.col("hours")/F.col("total_hours"))
 
 
@@ -43,9 +51,15 @@ def build_gold():
     try:
         spark = get_spark()
         silver = spark.read.parquet(str(SILVER)).cache()
-        all_modes = count_modes(silver,"direct").unionByName(count_modes(silver,"indirect"))
+        scenarios = load_scenarios()
+        all_modes = None
+        for scenario in scenarios:
+            c_mode = count_modes(silver,scenario)
+            if all_modes is None:
+                all_modes = c_mode
+            else: 
+                all_modes = all_modes.unionByName(c_mode)
         gold = (add_coverage(add_mode_share(all_modes)
-                .withColumn("params",F.lit(json.dumps(DEFAULT_PARAMS)))
                 .withColumn("processed_at", F.current_timestamp())))
         gold.coalesce(1).write.mode("overwrite").parquet(str(GOLD))
         log.info(f"gold written: {gold.count()} rows")

@@ -73,6 +73,7 @@ erDiagram
         long   hours
         double water_degree_hours
         double chiller_degree_hours
+        long   humidity_limited_hours
     }
     fact_city_year {
         string city PK
@@ -153,6 +154,7 @@ erDiagram
 | hours | long | number of valid hours in this mode (additive) |
 | water_degree_hours | double | Σ over the hours of (cooling done with water), K·h – proxy for water demand (additive) |
 | chiller_degree_hours | double | Σ over the hours of (cooling done by the chiller), K·h – proxy for chiller electricity (additive) |
+| humidity_limited_hours | long | hours in which outside air was too humid to use (direct design); the chiller runs, but cool humid hours add 0 to chiller_degree_hours (additive) |
 
 Degree-hours per hour (from `classify`, a = threshold of the scenario):
 
@@ -229,7 +231,6 @@ Derived in code, not stored in the seed: `threshold_a` (= A for direct; T_return
 | scenario | design | evap_assist | A | dew_max | dew_min | eps_evap | eps_hx | T_return |
 |---|---|---|---|---|---|---|---|---|
 | air_direct | direct | true | 27 | 15 | −9 | 0.8 | – | – |
-| air_direct_no_hybrid | direct | false | 27 | 15 | −9 | 0.8 | – | – |
 | air_indirect | indirect | true | 27 | – | – | 0.8 | 0.7 | 37 |
 | air_indirect_no_hybrid | indirect | false | 27 | – | – | 0.8 | 0.7 | 37 |
 
@@ -259,6 +260,8 @@ One row = one cooling mode. Seed: `data/seed/dim_mode.csv`.
 | chiller | Chiller cooling | false | true | #F18F49 | 4 |
 
 ## 5. Design decisions (short)
+- **Two direct scenarios were identical → one dropped** (2026-11-21). With the ASHRAE recommended dew-point limit (15 °C), the humidity limit always binds before evaporative cooling runs out: 0 hybrid hours in the direct design for all 23 cities, 1961–2026. Every direct chiller hour is humidity-limited. `air_direct_no_hybrid` gave the same result as `air_direct` and was removed. `evap_assist` stays as a column: it matters for the indirect design, and could matter for direct with a wider dew-point limit.
+- **Indirect: evaporative assist removes the pure chiller** (2026-11-21). `air_indirect` has 0 pure-chiller hours; `air_indirect_no_hybrid` turns the same hours into chiller hours (997 of 1,518 city-years). Both indirect scenarios are kept.
 - Time stored in UTC; local time only for hour-of-day views (timezone from `dim_city`).
 - Silver: incremental upsert on city + time via a staging folder (ADR-002); Delta MERGE on Databricks later.
 - Gold small → fully recomputed from silver on every run.
