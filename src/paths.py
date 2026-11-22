@@ -23,15 +23,22 @@ KOPPEN_TIF = KOPPEN_DIR / "1991_2020" / "koppen_geiger_0p1.tif"
 #FLAP-D plus challenger cities -> Group 1
 CITIES_FILE = DATA / "seed" / "cities.csv" 
 CITY_LIST_FILE = DATA / "seed" / "city_list.csv"
+#all cities from 2026 report, categorized in tiers 1-2-3 
+CITIES_ALL_FILE = DATA / "seed" / "cities_all.csv"
+CITIES_LIST_ALL = DATA / "seed" / "city_list_all.csv"
+#cities with water stress 
+CITIES_WATER_STRESS = DATA / "seed" / "cities_water_stress.csv"
+
+# Water stress
+
+
+GDB = DATA /"reference" / "aqueduct" / "GDB"/ "Aq40_Y2023D07M05.gdb"
+BWS = DATA /"reference" / "aqueduct" / "CVS" / "Aqueduct40_baseline_monthly_y2023m07d05.csv"
 
 #global without group 1 
 CITIES_GLOBAL_FILE = DATA / "seed" / "cities_global.csv"
 CITY_LIST_GLOBAL_FILE = DATA / "seed" / "city_list_global.csv"
 
-#all cities from 2026 report, categorized in tiers 1-2-3 
-CITIES_ALL_FILE = DATA / "seed" / "cities_all.csv"
-CITIES_LIST_ALL = DATA / "seed" / "city_list_all.csv"
 
 # dimension scenario
-
 SCENARIOS_FILE = DATA / "seed" / "dim_scenario.csv"
