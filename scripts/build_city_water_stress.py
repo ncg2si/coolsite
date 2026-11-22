@@ -31,6 +31,7 @@ def join_monthly(points: GeoDataFrame) -> GeoDataFrame:
 def join_annual(points:GeoDataFrame)-> GeoDataFrame:
     bws_cols = ["pfaf_id","geometry", "bws_score","bws_cat","bws_label"]
     bws_yearly = gpd.read_file(GDB,layer="baseline_annual")[bws_cols]
+    bws_yearly["bws_cat"] = bws_yearly["bws_cat"].astype("Int64")
     return gpd.sjoin(points, bws_yearly, how="left", predicate="within")[["city"] + bws_cols ]
 
 if __name__ == "__main__":
@@ -38,9 +39,9 @@ if __name__ == "__main__":
     cities_bws_monthly = join_monthly(points)
     cities_bws_yearly = join_annual(points)
     cities_bws_yearly = cities_bws_yearly.rename(columns={"bws_score": "bws_annual_score", "bws_cat": "bws_annual_cat", "bws_label":"bws_annual_label"})
-    cities_bws = cities_bws_monthly.merge(cities_bws_yearly, how='left', on="city")
+    cities_bws = cities_bws_monthly.merge(cities_bws_yearly, how='left', on="city", validate='1:1')
     cities_bws = cities_bws.drop("geometry",axis=1)
-    cities_bws[["city", "pfaf_id", "bws_annual_score", "bws_annual_cat", "bws_annual_label", "bws_months_ge_4"]]
-    print(len(cities_bws))
+    cities_bws = cities_bws[["city", "pfaf_id", "bws_annual_score", "bws_annual_cat", "bws_annual_label", "bws_months_ge_4"]]
+    assert len(cities_bws) == 106
     cities_bws.to_csv(CITIES_WATER_STRESS,index=False)
     

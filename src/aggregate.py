@@ -6,7 +6,7 @@ import pandas as pd
 from spark_utils import get_spark
 from classify import classify
 from utils.log import get_logger
-from paths import SILVER, GOLD, SCENARIOS_FILE
+from paths import SILVER, GOLD_FACT_COOLING_HOURS, SCENARIOS_FILE, GOLD_FACT_CITY_YEAR
 from contract import MIN_COVERAGE_CITY_YEAR
  
 def load_scenarios() -> list:
@@ -59,10 +59,21 @@ def build_gold():
                 all_modes = c_mode
             else: 
                 all_modes = all_modes.unionByName(c_mode)
-        gold = (add_coverage(add_mode_share(all_modes)
-                .withColumn("processed_at", F.current_timestamp())))
-        gold.coalesce(1).write.mode("overwrite").parquet(str(GOLD))
-        log.info(f"gold written: {gold.count()} rows")
+        # gold = (add_coverage(add_mode_share(all_modes)
+        #         .withColumn("processed_at", F.current_timestamp())))
+        # totals = silver.groupBy("city","year").agg(F.count("*").alias("total_hours"))
+        # all_modes = all_modes.join(totals,on= ["city","year"])
+        # grain: 1 row = city + year + scenario + mode
+        fact_cooling_hours = all_modes.withColumn("processed_at", F.current_timestamp())
+        # grain: 1 row = city + year  (count hours straight from silver, no join)
+        totals = silver.groupBy("city","year").agg(F.count("*").alias("total_hours"))
+        fact_city_year = (add_coverage(totals)
+                        .withColumn("processed_at", F.current_timestamp()))
+        fact_cooling_hours_cols = ["city","year","scenario","mode","hours","water_degree_hours","chiller_degree_hours","humidity_limited_hours","processed_at"]
+        fact_city_year_cols = ["city","year","expected_hours","total_hours","coverage","incomplete","processed_at"]
+        fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols).write.mode("overwrite").parquet(str(GOLD_FACT_COOLING_HOURS))
+        fact_city_year.coalesce(1).select(fact_city_year_cols).write.mode("overwrite").parquet(str(GOLD_FACT_CITY_YEAR))
+        log.info(f"gold written: fact_cooling_hours {fact_cooling_hours.count()} rows, fact_city_year {fact_city_year.count()} rows")
         log.info(f"gold run finished: SUCCESS ({time.perf_counter()- t0:.1f} s)")
     except Exception:
         log.exception("gold run FAILED")

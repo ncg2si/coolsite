@@ -10,7 +10,9 @@ DATA = Path(os.environ.get("COOLSITE_DATA", PROJECT_ROOT / "data")) # if no env 
 BRONZE = DATA / "bronze"
 SILVER = DATA / "silver"
 QUARANTINE = DATA / "quarantine"
-GOLD = DATA / "gold" / "cooling_modes"
+#GOLD = DATA / "gold" / "cooling_modes"
+GOLD_FACT_COOLING_HOURS = DATA / "gold" / "fact_cooling_hours"
+GOLD_FACT_CITY_YEAR = DATA / "gold" / "fact_city_year"
 LOGS = PROJECT_ROOT / "logs"
 STAGING = DATA / "staging"
 
