@@ -27,7 +27,7 @@ Regulation puts numbers on this: Germany's Energy Efficiency Act (EnEfG) caps PU
 
 Saving water matters most where water is scarce. CoolSite therefore adds each city's **water stress** (WRI Aqueduct 4.0): the same evaporative hours weigh more in Madrid than in Oslo.
 
-**User:** a company deciding where to build a new data centre (site-selection team).
+**User:** a site-selection team deciding where to build a new data centre. Example persona used throughout: **Lena**, site-selection lead at a cloud provider, needs 50 MW of new capacity – and Frankfurt is full.
 
 **Output**
 - Gold layer as a **star schema**: hours, water degree-hours and chiller degree-hours per city × year × scenario × mode, plus data coverage per city × year; dimensions for city (incl. water stress), year, scenario and mode → [data_model.md](data_model.md).
@@ -65,22 +65,17 @@ Storyline: **power → AI flexibility → regulation → cooling**. CoolSite mea
 
 <img src="figures/01_cooling_modes.png" alt="Three ways to cool a data centre" width="800">
 
-**Thresholds come from ASHRAE — and everything is a parameter**
+Three ways to remove the heat: **cold air → free cooling** (like a fan: no water, little electricity); **warm but dry air → evaporative cooling** (like sweating: uses water); **hot or humid air → chiller** (like an air conditioner: lots of electricity). The weather of every hour decides which one is possible.
 
-**ASHRAE** (American Society of Heating, Refrigerating and Air-Conditioning Engineers) publishes, through its committee TC 9.9, the reference guidelines for the air entering servers. They are recommendations, not law, but the de-facto design reference — also in Europe.
-
-- CoolSite's starting values = ASHRAE **recommended** range: inlet air 18–27 °C, dew point −9 … 15 °C.
-- Evaporative cooling is judged by the supply air it can deliver: **T − ε_evap · (T − wet-bulb)** must reach A (ε_evap = 0.8, ASHRAE Handbook ch. 41). Indirect-design parameters: heat-exchanger effectiveness 0.7, return air 37 °C (sources in [data_model.md](data_model.md)).
-- **Every threshold lives in a scenario table** (`data/seed/dim_scenario.csv`), nothing is hard-coded → a new assumption is a new row, and gold is recomputed from silver without re-downloading.
+*Lena's first question: in how many hours a year would the fan be enough?*
 
 ## 5. Two designs: direct and indirect
 
-How CoolSite classifies each hour depends on how the data centre uses the outside air:
+*Lena also has to choose a design: let the outside air in, or keep it out?* How CoolSite classifies each hour depends on that choice:
 
 - **Direct** (MVP) — outside air goes into the server room → its humidity matters → dew-point check first.
 - **Indirect** (scenario) — a heat exchanger keeps outside air out → no humidity limit, but the exchanger passes only a share ε of the cooling → stricter thresholds.
 
-Each design runs **with and without a hybrid mode** (evaporative pre-cooling + chiller trim) → **4 scenarios**. Per hour CoolSite also records **degree-hours** (K·h): how far the outside air is above the threshold, split into the part done with water and the part done by the chiller – a proxy for water and electricity demand, not litres or kWh.
 
 **Direct design (MVP)**
 
@@ -108,14 +103,26 @@ Evaporative cooling can only bring air down **towards the wet-bulb temperature**
 
 <img src="figures/04_same_temperature_different_answer.png" alt="Same 30 °C, different answer" width="800">
 
-## 7. Water stress: a second, different data source
+## 7. Thresholds and scenarios
+
+**ASHRAE** (American Society of Heating, Refrigerating and Air-Conditioning Engineers) publishes, through its committee TC 9.9, the reference guidelines for the air entering servers. They are recommendations, not law, but the de-facto design reference — also in Europe.
+
+- CoolSite's starting values = ASHRAE **recommended** range: inlet air 18–27 °C, dew point −9 … 15 °C.
+- Evaporative cooling is judged by the supply air it can deliver: **T − ε_evap · (T − wet-bulb)** must reach A (ε_evap = 0.8, ASHRAE Handbook ch. 41). Indirect-design parameters: heat-exchanger effectiveness 0.7, return air 37 °C (sources in [data_model.md](data_model.md)).
+- **Every threshold lives in a scenario table** (`data/seed/dim_scenario.csv`), nothing is hard-coded → a new assumption is a new row, and gold is recomputed from silver without re-downloading.
+
+Each design runs **with and without a hybrid mode** (evaporative pre-cooling + chiller trim) → **4 scenarios**. Per hour CoolSite also records **degree-hours** (K·h): how far the outside air is above the threshold, split into the part done with water and the part done by the chiller – a proxy for water and electricity demand, not litres or kWh.
+
+*For Lena this means: she compares scenarios side by side – for example, what keeping the hybrid mode off costs in chiller degree-hours – and every number names the assumptions behind it.*
+
+## 8. Water stress: a second, different data source
 
 - **What:** baseline water stress per river basin from WRI Aqueduct 4.0, annual and monthly, on a 0–5 scale.
 - **How:** static reference data, loaded once. Each city point is joined to the river basin it lies in (spatial join) and the result is stored in `dim_city`. A deliberate contrast to the daily weather time series.
-- **Why it matters in practice:** operators assess water risk at site selection. Equinix committed in 2023 to avoid evaporative cooling in areas with high water stress; Google chose air cooling for its Mesa (Arizona) site because the local water source was at high risk of depletion.
+- **Why it matters for Lena:** the same evaporative hours weigh more in Madrid than in Oslo. Operators assess water risk at site selection. Equinix committed in 2023 to avoid evaporative cooling in areas with high water stress; Google chose air cooling for its Mesa (Arizona) site because the local water source was at high risk of depletion.
 - **Limit:** a screening indicator at river-basin scale, not a local water-utility assessment.
 
-## 8. Pipeline and technology
+## 9. Pipeline and technology
 
 ```mermaid
 flowchart TB
@@ -154,7 +161,7 @@ flowchart TB
 - Portability rules: logic separate from I/O, all paths and thresholds in config, secrets only in environment variables, Git from the start.
 - **Tests (pytest):** classification incl. degree-hours, wet-bulb, validation rules, incremental windows, retry, upsert, coverage, mode counts; a failure demo shows recovery after a run with missing recent data.
 
-## 9. First results (23 cities, 1961–2026)
+## 10. First results (23 cities, 1961–2026)
 
 Share of hours per cooling mode, direct design:
 
@@ -176,7 +183,7 @@ Share of hours per cooling mode, direct design:
 - **Water stress:** 14 of 23 cities never reach "extremely high" water stress in any month; Madrid and Barcelona do in 10 months of the year.
 - **Data checks on gold:** no duplicate keys; per city × year × scenario, the hours of all modes add up exactly to the hours in silver; only the current year (2026) is flagged incomplete.
 
-## 10. Status, risks and scope
+## 11. Status, risks and scope
 
 **Decided**
 - Core: hourly cooling-mode classification (free / evaporative / hybrid / chiller) with degree-hours
