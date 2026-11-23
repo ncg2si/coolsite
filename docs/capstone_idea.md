@@ -2,8 +2,8 @@
 
 > Free cooling, water or chillers? A climate pipeline for European data-centre siting.
 
-Business requirements · Last updated: 2026-11-20
-City selection: [cities.md](cities.md) · Data model: [data_model.md](data_model.md) · Data quality: [data_contract.md](data_contract.md)
+Business requirements · Last updated: 2026-11-23
+City selection: [cities.md](cities.md) · Architecture: [architecture.md](architecture.md) · Data model: [data_model.md](data_model.md) · Data quality: [data_contract.md](data_contract.md)
 
 > **Key question:** Does a city's climate let a data centre save electricity, save water — or both?
 
@@ -30,8 +30,8 @@ Saving water matters most where water is scarce. CoolSite therefore adds each ci
 **User:** a company deciding where to build a new data centre (site-selection team).
 
 **Output**
-- Gold table per city × year: hours and **shares** of free cooling / evaporative / chiller, plus data coverage.
-- Dashboard comparing FLAP-D and challenger cities, filterable by regulatory zone (EU / EEA / non-EU).
+- Gold layer as a **star schema**: hours, water degree-hours and chiller degree-hours per city × year × scenario × mode, plus data coverage per city × year; dimensions for city (incl. water stress), year, scenario and mode → [data_model.md](data_model.md).
+- Power BI dashboard comparing FLAP-D and challenger cities, filterable by regulatory zone (EU / EEA / non-EU) and cooling scenario.
 
 ## 2. Why siting is changing
 
@@ -70,8 +70,8 @@ Storyline: **power → AI flexibility → regulation → cooling**. CoolSite mea
 **ASHRAE** (American Society of Heating, Refrigerating and Air-Conditioning Engineers) publishes, through its committee TC 9.9, the reference guidelines for the air entering servers. They are recommendations, not law, but the de-facto design reference — also in Europe.
 
 - CoolSite's starting values = ASHRAE **recommended** range: inlet air 18–27 °C, dew point −9 … 15 °C.
-- Not from ASHRAE: the wet-bulb threshold B (source still open) and the indirect-design parameters.
-- **Every threshold lives in the config**, nothing is hard-coded → scenarios (e.g. ASHRAE allowable instead of recommended, safety margins) can be compared by re-running the pipeline.
+- Evaporative cooling is judged by the supply air it can deliver: **T − ε_evap · (T − wet-bulb)** must reach A (ε_evap = 0.8, ASHRAE Handbook ch. 41). Indirect-design parameters: heat-exchanger effectiveness 0.7, return air 37 °C (sources in [data_model.md](data_model.md)).
+- **Every threshold lives in a scenario table** (`data/seed/dim_scenario.csv`), nothing is hard-coded → a new assumption is a new row, and gold is recomputed from silver without re-downloading.
 
 ## 5. Two designs: direct and indirect
 
@@ -79,6 +79,8 @@ How CoolSite classifies each hour depends on how the data centre uses the outsid
 
 - **Direct** (MVP) — outside air goes into the server room → its humidity matters → dew-point check first.
 - **Indirect** (scenario) — a heat exchanger keeps outside air out → no humidity limit, but the exchanger passes only a share ε of the cooling → stricter thresholds.
+
+Each design runs **with and without a hybrid mode** (evaporative pre-cooling + chiller trim) → **4 scenarios**. Per hour CoolSite also records **degree-hours** (K·h): how far the outside air is above the threshold, split into the part done with water and the part done by the chiller – a proxy for water and electricity demand, not litres or kWh.
 
 **Direct design (MVP)**
 
@@ -88,7 +90,7 @@ How CoolSite classifies each hour depends on how the data centre uses the outsid
 
 *Too humid → water condenses on cold surfaces → the air must be dried (electricity). Too dry → static electricity → humidifiers (water). Real example: Meta Luleå uses direct outside air with 78 humidifiers.*
 
-**Indirect design (scenario after the MVP)**
+**Indirect design**
 
 <img src="figures/02b_how_coolsite_decides_indirect.png" alt="How CoolSite decides, hour by hour — indirect design" width="800">
 
@@ -115,36 +117,91 @@ Evaporative cooling can only bring air down **towards the wet-bulb temperature**
 
 ## 8. Pipeline and technology
 
+```mermaid
+flowchart TB
+    subgraph TS["Weather – time series (daily)"]
+        direction LR
+        OM["Open-Meteo API"] --> BR["Bronze<br/>raw JSON"]
+        BR --> VAL{"Validate"}
+        VAL -- pass --> SV["Silver<br/>clean hours"]
+        VAL -- fail --> Q["Quarantine"]
+        SV --> CL["Classify<br/>per scenario"]
+    end
+
+    subgraph RF["Reference data – static"]
+        direction LR
+        AQ["Aqueduct<br/>water stress"]
+        SEED["Seeds<br/>cities, scenarios, modes"]
+    end
+
+    CL --> GD["Gold – star schema<br/>2 facts + 4 dimensions"]
+    RF --> GD
+    GD --> PBI["Power BI"]
+```
+
 | Layer | What happens |
 |---|---|
-| **Source** | Open-Meteo Historical Weather API (ERA5, hourly since 1940, ~5-day delay): temperature, relative humidity, dew point. Backfill from 1961; each run reloads the last ~7 days (idempotent overwrite). |
-| **Bronze** | Raw API response per city and load, unchanged (JSON). |
-| **Validation** | Versioned data contract (v0.4) with 9 checks: structural gate (fields, timezone) → dataset checks (time range, duplicates, gaps) → row rules (nulls, value ranges, dew point ≤ temperature). Bad rows are quarantined with rule IDs, never deleted silently. Error budget: ≤ 2 unusable hours per file; a city-year counts only with ≥ 99.9 % valid hours. |
-| **Silver** | One row per city × hour, typed (UTC), plus wet-bulb and the cooling mode. |
-| **Gold** | Per city × year (× design): hours and shares of each mode, coverage, humidity flags. Check: the three modes add up to the valid hours. |
+| **Source** | Open-Meteo Historical Weather API, model pinned to ERA5-Land: temperature, relative humidity, dew point, hourly. Backfill 1961–2025; then a daily **incremental** load from *watermark − 7 days* to *today − 7 days* (the newest days arrive late and can be revised). Retry with backoff on 429/5xx; a daily-quota error stops the run cleanly. |
+| **Bronze** | Raw API response, one immutable JSON file per city × load window (`…__fetched_<UTC timestamp>.json`) → any layer can be rebuilt. |
+| **Validation** | Versioned data contract (v0.6.1), 9 rules: structural gate → dataset checks (time range, duplicates, gaps) → row rules (nulls, value ranges, dew point ≤ temperature). Rejected hours go to **quarantine** with rule IDs, never deleted silently. Error budget: ≤ 2 unusable hours per file; a city-year is flagged incomplete below 99.9 % valid hours. |
+| **Silver** | One row per city × hour (UTC) plus wet-bulb (Stull 2011) and lineage (run_id, processed_at). Incremental runs **upsert** on (city, time) through a staging folder; the watermark only moves after a successful write ([ADR-002](adr/ADR-002-incremental-loading.md)). |
+| **Gold** | Star schema, recomputed from silver: `classify` runs once per scenario row. `fact_cooling_hours` (city × year × scenario × mode), `fact_city_year` (city × year: total and expected hours), `dim_city` (incl. water stress), `dim_year`, `dim_scenario`, `dim_mode`. |
+| **Dashboard** | Power BI Desktop (on an Azure Windows VM); ratios such as mode share and coverage are computed as measures, never stored. |
 
 **Engine and platform**
-- **PySpark + Spark SQL**, built and tested **locally first** (guaranteed, gradable fallback), then migrated to **Azure Databricks** (plan B: Databricks Free Edition) — same engine, no rewrite.
+- **PySpark + Spark SQL**, built and tested **locally first** (guaranteed, gradable fallback), then migrated to **Azure Databricks** – same engine, no rewrite. Water stress is prepared once with GeoPandas (spatial join) and stored as a seed.
 - **Why Databricks and Azure:** Databricks on Azure is the state of the art for data engineering in the Stuttgart region. Technically, it fits the pipeline's operation rather than its size: **Delta Lake `MERGE`** for safe, idempotent upserts of late and corrected data; **Unity Catalog** for access control and lineage; **scheduled jobs** that do not depend on a laptop; one governed place the dashboard reads from.
 - Portability rules: logic separate from I/O, all paths and thresholds in config, secrets only in environment variables, Git from the start.
+- **Tests (pytest):** classification incl. degree-hours, wet-bulb, validation rules, incremental windows, retry, upsert, coverage, mode counts; a failure demo shows recovery after a run with missing recent data.
 
-## 9. Status: decided, open, out of scope
+## 9. First results (23 cities, 1961–2026)
+
+Share of hours per cooling mode, direct design:
+
+| City | Period | Free | Evaporative | Chiller |
+|---|---|---|---|---|
+| Frankfurt | 1961–1990 | 93.9 % | 0.6 % | 5.5 % |
+| Frankfurt | 2016–2025 | 90.2 % | 1.8 % | 8.0 % |
+| Madrid | 1961–1990 | 91.4 % | 8.1 % | 0.5 % |
+| Madrid | 2016–2025 | 86.3 % | 12.7 % | 1.1 % |
+| Milan | 1961–1990 | 82.8 % | 0.7 % | 16.4 % |
+| Milan | 2016–2025 | 75.0 % | 1.6 % | 23.4 % |
+| Oslo | 1961–1990 | 97.8 % | 0.2 % | 2.0 % |
+| Oslo | 2016–2025 | 94.1 % | 0.5 % | 5.4 % |
+
+- **Free cooling is shrinking everywhere**, by about 3–8 percentage points between 1961–1990 and 2016–2025.
+- **Dry heat vs humid heat:** Madrid shifts towards **water** (evaporative), Milan towards **electricity** (chiller).
+- **In the direct design, humidity – not heat – switches the chiller on:** every direct chiller hour in the 23 cities is humidity-limited; the direct design never needs a hybrid mode with the ASHRAE recommended dew-point limit.
+- **Indirect design:** with evaporative assist, a pure chiller is never needed; without it, the same hours become chiller hours.
+- **Water stress:** 14 of 23 cities never reach "extremely high" water stress in any month; Madrid and Barcelona do in 10 months of the year.
+- **Data checks on gold:** no duplicate keys; per city × year × scenario, the hours of all modes add up exactly to the hours in silver; only the current year (2026) is flagged incomplete.
+
+## 10. Status, risks and scope
 
 **Decided**
-- Core: hourly cooling-mode classification (free / evaporative / chiller)
-- Direct design for the MVP; indirect as a parameter-driven scenario
-- ASHRAE recommended values as starting thresholds; all thresholds configurable
-- Metrics as shares of valid hours, with coverage
-- Data contract v0.4 with quarantine and error budget
-- Local PySpark first → Azure Databricks
+- Core: hourly cooling-mode classification (free / evaporative / hybrid / chiller) with degree-hours
+- 4 scenarios: direct and indirect design, each with and without hybrid mode; ASHRAE recommended values as starting thresholds
+- Gold as a star schema; ratios computed in the dashboard
+- Data contract v0.6.1 with quarantine and error budget; incremental loading with watermark, lookback and upsert
 - City list: 23 European cities (project) + 83 global cities (outlook); rule in [cities.md](cities.md)
-- Scenario parameters and their sources: [data_model.md](data_model.md) (`dim_scenario`)
 - Water stress (WRI Aqueduct 4.0) as a second, static data source in `dim_city`
+- Local PySpark first → Azure Databricks; dashboard in Power BI
 
-**Still open**
-- **Scope:** can grow (more cities, climate projections to 2050, grid waiting time as an extra layer) or shrink to fit the timeline
-- Source and method for the wet-bulb threshold B
-- MVP size: start with 3 cities (Frankfurt + 1 cold + 1 hot), then scale
+**Next**
+- Star-schema data tests (unique keys, referential integrity, balance) as pytest
+- Zero-hour modes: one row per mode even when a mode has 0 hours
+- Migration to Azure Databricks (Delta tables, scheduled job, Unity Catalog)
+- Power BI dashboard
+- Cross-check against station data (Meteostat) for 2–3 cities
+
+**Risks and assumptions**
+- **ERA5-Land is a model, not a measurement** (0.1° grid): local effects such as urban heat are smoothed → planned Meteostat cross-check.
+- **Degree-hours are a proxy**, not kWh or litres. Cool but humid hours run the chiller yet add 0 chiller degree-hours → reported separately as `humidity_limited_hours`.
+- **Thresholds are assumptions** (ASHRAE recommended range, ε values from literature) → kept as scenarios, not hidden in code.
+- **One point per city**: water stress and climate are taken at the city centre, not at an actual data-centre site.
+- **Recent data arrives late** and can be revised → load up to today − 7 days, re-read the last 7 days.
+- **API quota** (10,000 weighted calls per day, free tier, non-commercial) → resumable backfill with a daily budget.
+- **Cloud cost and trial limits** on Azure → budget alert, single-node auto-terminating cluster, local pipeline as fallback.
 
 **Out of scope:** grid waiting time, electricity prices, fibre, permits, land; per-facility PUE/WUE (confidential). CoolSite answers the **climate** part of the siting decision; grid waiting time is a candidate future layer.
 

@@ -20,7 +20,7 @@ flowchart TB
         EM["Ember<br/>renewable share"]:::planned
     end
 
-    CL --> GD["Gold – star schema"]
+    CL --> GD["Gold – star schema<br/>2 facts + 4 dimensions"]
     RF --> GD
     GD --> PBI["Power BI"]
 
