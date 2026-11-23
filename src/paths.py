@@ -15,6 +15,10 @@ GOLD_FACT_COOLING_HOURS = DATA / "gold" / "fact_cooling_hours"
 GOLD_FACT_CITY_YEAR = DATA / "gold" / "fact_city_year"
 LOGS = PROJECT_ROOT / "logs"
 STAGING = DATA / "staging"
+GOLD_DIM_MODE = DATA / "gold" / "dim_mode"
+GOLD_DIM_SCENARIO = DATA / "gold" / "dim_scenario"
+GOLD_DIM_CITY = DATA / "gold" / "dim_city"
+GOLD_DIM_YEAR = DATA / "gold" / "dim_year"
 
 # climate classification
 KOPPEN_DIR = DATA / "reference" / "koppen" / "koppen_geiger_tif"
@@ -30,10 +34,11 @@ CITIES_ALL_FILE = DATA / "seed" / "cities_all.csv"
 CITIES_LIST_ALL = DATA / "seed" / "city_list_all.csv"
 #cities with water stress 
 CITIES_WATER_STRESS = DATA / "seed" / "cities_water_stress.csv"
+# mode dimension
+DIM_MODE = DATA / "seed" / "dim_mode.csv"
+DIM_SCENARIO = DATA / "seed" / "dim_scenario.csv"
 
-# Water stress
-
-
+# Aqueduct Water stress
 GDB = DATA /"reference" / "aqueduct" / "GDB"/ "Aq40_Y2023D07M05.gdb"
 BWS = DATA /"reference" / "aqueduct" / "CVS" / "Aqueduct40_baseline_monthly_y2023m07d05.csv"
 

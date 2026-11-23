@@ -7,7 +7,9 @@ from spark_utils import get_spark
 from classify import classify
 from utils.log import get_logger
 from paths import SILVER, GOLD_FACT_COOLING_HOURS, SCENARIOS_FILE, GOLD_FACT_CITY_YEAR
+from paths import GOLD_DIM_MODE, GOLD_DIM_SCENARIO, GOLD_DIM_CITY, GOLD_DIM_YEAR
 from contract import MIN_COVERAGE_CITY_YEAR
+from dimensions import build_dim_mode, build_dim_scenario, build_dim_city, build_dim_year
  
 def load_scenarios() -> list:
     return pd.read_csv(SCENARIOS_FILE).to_dict(orient='records')
@@ -73,6 +75,15 @@ def build_gold():
         fact_city_year_cols = ["city","year","expected_hours","total_hours","coverage","incomplete","processed_at"]
         fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols).write.mode("overwrite").parquet(str(GOLD_FACT_COOLING_HOURS))
         fact_city_year.coalesce(1).select(fact_city_year_cols).write.mode("overwrite").parquet(str(GOLD_FACT_CITY_YEAR))
+        dim_mode = build_dim_mode(spark)
+        dim_mode.write.mode("overwrite").parquet(str(GOLD_DIM_MODE))
+        dim_scenario = build_dim_scenario(spark)
+        dim_scenario.write.mode("overwrite").parquet(str(GOLD_DIM_SCENARIO))
+        dim_city = build_dim_city(spark)
+        dim_city.write.mode("overwrite").parquet(str(GOLD_DIM_CITY))
+        first,last = fact_city_year.agg(F.min("year"),F.max("year")).first()
+        dim_year = build_dim_year(first,last,spark)
+        dim_year.write.mode("overwrite").parquet(str(GOLD_DIM_YEAR))
         log.info(f"gold written: fact_cooling_hours {fact_cooling_hours.count()} rows, fact_city_year {fact_city_year.count()} rows")
         log.info(f"gold run finished: SUCCESS ({time.perf_counter()- t0:.1f} s)")
     except Exception:
