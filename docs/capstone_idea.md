@@ -71,11 +71,11 @@ Three ways to remove the heat: **cold air → free cooling** (like a fan: no wat
 
 How CoolSite classifies each hour depends on how the data centre uses the outside air:
 
-- **Direct** (MVP) — outside air goes into the server room → its humidity matters → dew-point check first.
+- **Direct** — outside air goes into the server room → its humidity matters → dew-point check first.
 - **Indirect** (scenario) — a heat exchanger keeps outside air out → no humidity limit, but the exchanger passes only a share ε of the cooling → stricter thresholds.
 
 
-**Direct design (MVP)**
+**Direct design**
 
 <img src="figures/02_how_coolsite_decides.png" alt="How CoolSite decides, hour by hour — direct design" width="800">
 
@@ -181,7 +181,17 @@ Share of hours per cooling mode, direct design:
 - **Water stress:** 14 of 23 cities never reach "extremely high" water stress in any month; Madrid and Barcelona do in 10 months of the year.
 - **Data checks on gold:** no duplicate keys; per city × year × scenario, the hours of all modes add up exactly to the hours in silver; only the current year (2026) is flagged incomplete.
 
-## 11. Status, risks and scope
+## 11. MVP, status, risks and scope
+
+**MVP** (must work by 15 December)
+- Hourly cooling-mode classification for the **23 European cities**, 1961 to today, in 4 scenarios (direct / indirect × with / without hybrid mode), with degree-hours
+- Validated, incremental pipeline (bronze → silver → gold star schema) running on **Azure Databricks**
+- Water stress per city (WRI Aqueduct 4.0) in `dim_city`
+- **Power BI dashboard** answering: how much free cooling, water vs electricity, and the change since 1961–1990
+
+**Extensions** (low cost – the pipeline already handles them; only if time allows)
+- **83 global outlook cities:** bronze already loaded; included once their data-quality checks pass (quarantine rate, coverage, coastal grid cells)
+- Liquid-cooling and no-water scenarios · cross-check against station data (Meteostat) · threshold slider in the dashboard
 
 **Decided**
 - Core: hourly cooling-mode classification (free / evaporative / hybrid / chiller) with degree-hours
@@ -197,7 +207,6 @@ Share of hours per cooling mode, direct design:
 - Zero-hour modes: one row per mode even when a mode has 0 hours
 - Migration to Azure Databricks (Delta tables, scheduled job, Unity Catalog)
 - Power BI dashboard
-- Cross-check against station data (Meteostat) for 2–3 cities
 
 **Risks and assumptions**
 - **ERA5-Land is a model, not a measurement** (0.1° grid): local effects such as urban heat are smoothed → planned Meteostat cross-check.
