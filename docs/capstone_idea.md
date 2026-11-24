@@ -27,7 +27,7 @@ Regulation puts numbers on this: Germany's Energy Efficiency Act (EnEfG) caps PU
 
 Saving water matters most where water is scarce. CoolSite therefore adds each city's **water stress** (WRI Aqueduct 4.0): the same evaporative hours weigh more in Madrid than in Oslo.
 
-**User:** a site-selection team deciding where to build a new data centre. Example persona used throughout: **Lena**, site-selection lead at a cloud provider, needs 50 MW of new capacity – and Frankfurt is full.
+**User:** a site-selection team deciding where to build a new data centre.
 
 **Output**
 - Gold layer as a **star schema**: hours, water degree-hours and chiller degree-hours per city × year × scenario × mode, plus data coverage per city × year; dimensions for city (incl. water stress), year, scenario and mode → [data_model.md](data_model.md).
@@ -67,11 +67,9 @@ Storyline: **power → AI flexibility → regulation → cooling**. CoolSite mea
 
 Three ways to remove the heat: **cold air → free cooling** (like a fan: no water, little electricity); **warm but dry air → evaporative cooling** (like sweating: uses water); **hot or humid air → chiller** (like an air conditioner: lots of electricity). The weather of every hour decides which one is possible.
 
-*Lena's first question: in how many hours a year would the fan be enough?*
-
 ## 5. Two designs: direct and indirect
 
-*Lena also has to choose a design: let the outside air in, or keep it out?* How CoolSite classifies each hour depends on that choice:
+How CoolSite classifies each hour depends on how the data centre uses the outside air:
 
 - **Direct** (MVP) — outside air goes into the server room → its humidity matters → dew-point check first.
 - **Indirect** (scenario) — a heat exchanger keeps outside air out → no humidity limit, but the exchanger passes only a share ε of the cooling → stricter thresholds.
@@ -113,13 +111,13 @@ Evaporative cooling can only bring air down **towards the wet-bulb temperature**
 
 Each design runs **with and without a hybrid mode** (evaporative pre-cooling + chiller trim) → **4 scenarios**. Per hour CoolSite also records **degree-hours** (K·h): how far the outside air is above the threshold, split into the part done with water and the part done by the chiller – a proxy for water and electricity demand, not litres or kWh.
 
-*For Lena this means: she compares scenarios side by side – for example, what keeping the hybrid mode off costs in chiller degree-hours – and every number names the assumptions behind it.*
+A site-selection team can therefore compare scenarios side by side – for example, what disabling the hybrid mode costs in chiller degree-hours – and every number is traceable to the assumptions behind it.
 
 ## 8. Water stress: a second, different data source
 
 - **What:** baseline water stress per river basin from WRI Aqueduct 4.0, annual and monthly, on a 0–5 scale.
 - **How:** static reference data, loaded once. Each city point is joined to the river basin it lies in (spatial join) and the result is stored in `dim_city`. A deliberate contrast to the daily weather time series.
-- **Why it matters for Lena:** the same evaporative hours weigh more in Madrid than in Oslo. Operators assess water risk at site selection. Equinix committed in 2023 to avoid evaporative cooling in areas with high water stress; Google chose air cooling for its Mesa (Arizona) site because the local water source was at high risk of depletion.
+- **Why it matters in practice:** the same evaporative hours weigh more where water is scarce. Operators assess water risk at site selection. Equinix committed in 2023 to avoid evaporative cooling in areas with high water stress; Google chose air cooling for its Mesa (Arizona) site because the local water source was at high risk of depletion.
 - **Limit:** a screening indicator at river-basin scale, not a local water-utility assessment.
 
 ## 9. Pipeline and technology
