@@ -17,8 +17,8 @@ else:
     BRONZE = DATA / "bronze"
     SEED_DIR = DATA / "seed"
 
-SILVER = DATA / "silver"
-QUARANTINE = DATA / "quarantine"
+SILVER = DATA / "silver" / "weather_hourly"
+QUARANTINE = DATA / "silver" / "quarantine" 
 #GOLD = DATA / "gold" / "cooling_modes"
 GOLD_FACT_COOLING_HOURS = DATA / "gold" / "fact_cooling_hours"
 GOLD_FACT_CITY_YEAR = DATA / "gold" / "fact_city_year"

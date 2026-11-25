@@ -10,6 +10,7 @@ from paths import SILVER, GOLD_FACT_COOLING_HOURS, SCENARIOS_FILE, GOLD_FACT_CIT
 from paths import GOLD_DIM_MODE, GOLD_DIM_SCENARIO, GOLD_DIM_CITY, GOLD_DIM_YEAR
 from contract import MIN_COVERAGE_CITY_YEAR
 from dimensions import build_dim_mode, build_dim_scenario, build_dim_city, build_dim_year
+from storage import read_table, write_table, table_exists
  
 def load_scenarios() -> list:
     return pd.read_csv(SCENARIOS_FILE).to_dict(orient='records')
@@ -73,17 +74,23 @@ def build_gold():
                         .withColumn("processed_at", F.current_timestamp()))
         fact_cooling_hours_cols = ["city","year","scenario","mode","hours","water_degree_hours","chiller_degree_hours","humidity_limited_hours","processed_at"]
         fact_city_year_cols = ["city","year","expected_hours","total_hours","coverage","incomplete","processed_at"]
-        fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols).write.mode("overwrite").parquet(str(GOLD_FACT_COOLING_HOURS))
-        fact_city_year.coalesce(1).select(fact_city_year_cols).write.mode("overwrite").parquet(str(GOLD_FACT_CITY_YEAR))
+        #fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols).write.mode("overwrite").parquet(str(GOLD_FACT_COOLING_HOURS))
+        #fact_city_year.coalesce(1).select(fact_city_year_cols).write.mode("overwrite").parquet(str(GOLD_FACT_CITY_YEAR))
+        write_table(fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols),"gold","fact_cooling_hours")
+        write_table(fact_city_year.coalesce(1).select(fact_city_year_cols),"gold","fact_city_year")
         dim_mode = build_dim_mode(spark)
-        dim_mode.write.mode("overwrite").parquet(str(GOLD_DIM_MODE))
+        write_table(dim_mode,"gold","dim_mode")
+        #dim_mode.write.mode("overwrite").parquet(str(GOLD_DIM_MODE))
         dim_scenario = build_dim_scenario(spark)
-        dim_scenario.write.mode("overwrite").parquet(str(GOLD_DIM_SCENARIO))
+        write_table(dim_scenario,"gold","dim_scenario")
+        #dim_scenario.write.mode("overwrite").parquet(str(GOLD_DIM_SCENARIO))
         dim_city = build_dim_city(spark)
         dim_city.write.mode("overwrite").parquet(str(GOLD_DIM_CITY))
+        #write_table(dim_city,"gold","dim_city")
         first,last = fact_city_year.agg(F.min("year"),F.max("year")).first()
         dim_year = build_dim_year(first,last,spark)
-        dim_year.write.mode("overwrite").parquet(str(GOLD_DIM_YEAR))
+        #dim_year.write.mode("overwrite").parquet(str(GOLD_DIM_YEAR))
+        write_table(dim_year,"gold","dim_year")
         log.info(f"gold written: fact_cooling_hours {fact_cooling_hours.count()} rows, fact_city_year {fact_city_year.count()} rows")
         log.info(f"gold run finished: SUCCESS ({time.perf_counter()- t0:.1f} s)")
     except Exception:

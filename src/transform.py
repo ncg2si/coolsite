@@ -8,9 +8,10 @@ from pyspark.sql import functions as F
 from contract import CONTRACT_VERSION, WEATHER_MODEL
 from spark_utils import get_spark
 from utils.log import get_logger
-from paths import SILVER, QUARANTINE, STAGING
+from paths import SILVER, STAGING, ON_DATABRICKS
 from utils.wetbulb import wet_bulb_stull
 from validate import validate
+from storage import write_table, merge_into
 
 log = get_logger(Path(__file__).stem)
 
@@ -48,9 +49,14 @@ def write_partitioned(df: DataFrame, path: str) -> None:
 
 def upsert_silver(new: DataFrame, city: str, year: int)-> None:
     """New rows win on (city,time), other rows of (city,year) partition are kept
-    Writes via a staging folder: Spark cannot overwrite a path it is reading in the same plan
+    Locally :Writes via a staging folder: Spark cannot overwrite a path it is reading in the same plan
+    On Databricks: Delta MERGE
     """    
     spark = get_spark()
+    if ON_DATABRICKS:
+        merge_into(spark,new,"silver","weather_hourly",keys=["city","year"])
+        return
+    # local: unchanged
     in_partition =  (F.col("city") == city) & (F.col("year") == year )  
     partition_dir = SILVER / f"city={city}" / f"year={year}"
     if partition_dir.exists():
@@ -80,13 +86,11 @@ def transform_city_year(city: str, start: str, end: str) -> None:
         year = int(start[:4])
         upsert_silver(to_silver(valid, run_id), city, year)
         log.info(f"[{run_id}] silver written: {n_valid} rows")
-        (quarantine.withColumn("year",F.year(F.col("time")))
+        quarantine = (quarantine.withColumn("year",F.year(F.col("time")))
                 .withColumn("run_id",F.lit(run_id))
                 .withColumn("processed_at",F.current_timestamp())
-                .write.mode("append")
-                .partitionBy("city","year")
-                .parquet(str(QUARANTINE)))
-        
+        )
+        write_table(quarantine,"silver","quarantine",mode="append",partition_by=["city","year"])              
         log.info(f"[{run_id}] quarantine appended: {n_quarantine} rows")
         log.info(f"[{run_id}] run finished: SUCCESS ({time.perf_counter() - t0:.1f} s)")
     except Exception:
