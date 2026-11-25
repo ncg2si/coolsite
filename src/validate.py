@@ -215,8 +215,9 @@ def collect(result: CheckResult, problems: list[str], warning_lists: list[str]) 
 # Separate validation
 
 
-def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
-    """Run all DQ checks on one bronze file. Return (valid rows, quarantined rows)."""
+def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame, dict]:
+    """Run all DQ checks on one bronze file. 
+    Return (valid rows, quarantined rows, number of valid rows and number of quarantined rows)."""
     start_d, end_d = parse_date_range(start,end)
     start, end = start_d.isoformat(), end_d.isoformat()   # luôn là "2025-12-31"
     path = latest_bronze_path(city, start, end)
@@ -280,7 +281,8 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
             f"quarantined={n_total_quarantine} warnings={len(warnings_list)}")
 
         # 8. RETURN
-        return valid, quarantine
+        stats = {"n_valid":n_valid,"n_quarantine": n_total_quarantine}
+        return valid, quarantine, stats
     finally:
         raw.unpersist()
 

@@ -80,18 +80,22 @@ def transform_city_year(city: str, start: str, end: str) -> None:
     t0 = time.perf_counter()
     log.info(f"[{run_id}] run started: {city} {start} -> {end}")
     try:
-        valid, quarantine = validate(city, start, end)
-        n_valid, n_quarantine = valid.count(), quarantine.count()
+        valid, quarantine, stats = validate(city, start, end)
+        #n_valid, n_quarantine = valid.count(), quarantine.count()
+        n_valid, n_quarantine = stats["n_valid"], stats["n_quarantine"]
         log.info(f"[{run_id}] validate done: valid = {n_valid} quarantine = {n_quarantine}")
         year = int(start[:4])
         upsert_silver(to_silver(valid, run_id), city, year)
         log.info(f"[{run_id}] silver written: {n_valid} rows")
-        quarantine = (quarantine.withColumn("year",F.year(F.col("time")))
-                .withColumn("run_id",F.lit(run_id))
-                .withColumn("processed_at",F.current_timestamp())
-        )
-        write_table(quarantine,"silver","quarantine",mode="append",partition_by=["city","year"])              
-        log.info(f"[{run_id}] quarantine appended: {n_quarantine} rows")
+        if n_quarantine >0:
+            quarantine = (quarantine.withColumn("year",F.year(F.col("time")))
+                    .withColumn("run_id",F.lit(run_id))
+                    .withColumn("processed_at",F.current_timestamp())
+            )
+            write_table(quarantine,"silver","quarantine",mode="append",partition_by=["city","year"])              
+            log.info(f"[{run_id}] quarantine appended: {n_quarantine} rows")
+        else:
+            log.info(f"[{run_id}] quarantine empty -> skipped")
         log.info(f"[{run_id}] run finished: SUCCESS ({time.perf_counter() - t0:.1f} s)")
     except Exception:
         log.exception(f"[{run_id}] run FAILED")
