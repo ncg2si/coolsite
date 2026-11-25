@@ -12,13 +12,13 @@ def get_spark() -> SparkSession:
     if ON_DATABRICKS:
         spark = SparkSession.builder.getOrCreate()
         spark.conf.set("spark.sql.session.timeZone","UTC")
-        spark.conf.set("spark.sql.shuffle.partitions", str(SHUFFLE_PARTITIONS_DB)")
+        spark.conf.set("spark.sql.shuffle.partitions", str(SHUFFLE_PARTITIONS_DB))
         return spark
     return (SparkSession.builder
             .appName("coolsite")
             .master("local[*]")
             .config("spark.sql.session.timeZone", "UTC")
-            .config("spark.sql.shuffle.partitions", str(SHUFFLE_PARTITIONS_LOCAL)")
+            .config("spark.sql.shuffle.partitions", str(SHUFFLE_PARTITIONS_LOCAL))
             .config("spark.driver.memory", "4g")
             .getOrCreate())
 def read_bronze_hourly(spark: SparkSession, path: str, city: str) -> DataFrame:
