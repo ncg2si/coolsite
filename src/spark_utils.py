@@ -4,19 +4,21 @@ from contract import EXPECT_FIELDS, COLUMN_MAP
 from paths import ON_DATABRICKS
 
 
-
+SHUFFLE_PARTITIONS_DB = 8
+SHUFFLE_PARTITIONS_LOCAL = 22
 
 def get_spark() -> SparkSession:
     """ A local/databricks spark session """
     if ON_DATABRICKS:
         spark = SparkSession.builder.getOrCreate()
         spark.conf.set("spark.sql.session.timeZone","UTC")
+        spark.conf.set("spark.sql.shuffle.partitions", f"{SHUFFLE_PARTITIONS_DB}")
         return spark
     return (SparkSession.builder
             .appName("coolsite")
             .master("local[*]")
             .config("spark.sql.session.timeZone", "UTC")
-            .config("spark.sql.shuffle.partitions", "8")
+            .config("spark.sql.shuffle.partitions", f"{SHUFFLE_PARTITIONS_LOCAL}")
             .config("spark.driver.memory", "4g")
             .getOrCreate())
 def read_bronze_hourly(spark: SparkSession, path: str, city: str) -> DataFrame:
