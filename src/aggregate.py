@@ -1,17 +1,26 @@
 import time
 from pathlib import Path
-from pyspark.sql import functions as F
-import pandas as pd
 
-from spark_utils import get_spark
+import pandas as pd
+from pyspark.sql import functions as F
+
 from classify import classify
-from utils.log import get_logger
-from paths import SILVER, GOLD_FACT_COOLING_HOURS, SCENARIOS_FILE, GOLD_FACT_CITY_YEAR
-from paths import GOLD_DIM_MODE, GOLD_DIM_SCENARIO, GOLD_DIM_CITY, GOLD_DIM_YEAR
 from contract import MIN_COVERAGE_CITY_YEAR
-from dimensions import build_dim_mode, build_dim_scenario, build_dim_city, build_dim_year
-from storage import read_table, write_table, table_exists
- 
+from dimensions import (
+    build_dim_city,
+    build_dim_mode,
+    build_dim_scenario,
+    build_dim_year,
+)
+from paths import (
+    SCENARIOS_FILE,
+    SILVER,
+)
+from spark_utils import get_spark
+from storage import write_table
+from utils.log import get_logger
+
+
 def load_scenarios() -> list:
     return pd.read_csv(SCENARIOS_FILE).to_dict(orient='records')
 
@@ -46,7 +55,6 @@ def add_coverage(df):
 
 log = get_logger(Path(__file__).stem)
 
-
 def build_gold():
     t0 = time.perf_counter()
     log.info("gold run started")
@@ -62,10 +70,6 @@ def build_gold():
                 all_modes = c_mode
             else: 
                 all_modes = all_modes.unionByName(c_mode)
-        # gold = (add_coverage(add_mode_share(all_modes)
-        #         .withColumn("processed_at", F.current_timestamp())))
-        # totals = silver.groupBy("city","year").agg(F.count("*").alias("total_hours"))
-        # all_modes = all_modes.join(totals,on= ["city","year"])
         # grain: 1 row = city + year + scenario + mode
         fact_cooling_hours = all_modes.withColumn("processed_at", F.current_timestamp())
         # grain: 1 row = city + year  (count hours straight from silver, no join)
@@ -74,19 +78,14 @@ def build_gold():
                         .withColumn("processed_at", F.current_timestamp()))
         fact_cooling_hours_cols = ["city","year","scenario","mode","hours","water_degree_hours","chiller_degree_hours","humidity_limited_hours","processed_at"]
         fact_city_year_cols = ["city","year","expected_hours","total_hours","coverage","incomplete","processed_at"]
-        #fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols).write.mode("overwrite").parquet(str(GOLD_FACT_COOLING_HOURS))
-        #fact_city_year.coalesce(1).select(fact_city_year_cols).write.mode("overwrite").parquet(str(GOLD_FACT_CITY_YEAR))
         write_table(fact_cooling_hours.coalesce(1).select(fact_cooling_hours_cols),"gold","fact_cooling_hours")
         write_table(fact_city_year.coalesce(1).select(fact_city_year_cols),"gold","fact_city_year")
         dim_mode = build_dim_mode(spark)
         write_table(dim_mode,"gold","dim_mode")
-        #dim_mode.write.mode("overwrite").parquet(str(GOLD_DIM_MODE))
         dim_scenario = build_dim_scenario(spark)
         write_table(dim_scenario,"gold","dim_scenario")
-        #dim_scenario.write.mode("overwrite").parquet(str(GOLD_DIM_SCENARIO))
         dim_city = build_dim_city(spark)
-        dim_city.write.mode("overwrite").parquet(str(GOLD_DIM_CITY))
-        #write_table(dim_city,"gold","dim_city")
+        write_table(dim_city,"gold",dim_city)
         first,last = fact_city_year.agg(F.min("year"),F.max("year")).first()
         dim_year = build_dim_year(first,last,spark)
         #dim_year.write.mode("overwrite").parquet(str(GOLD_DIM_YEAR))
