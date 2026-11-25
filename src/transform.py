@@ -54,7 +54,7 @@ def upsert_silver(new: DataFrame, city: str, year: int)-> None:
     """    
     spark = get_spark()
     if ON_DATABRICKS:
-        merge_into(spark,new,"silver","weather_hourly",keys=["city","year"])
+        merge_into(spark,new,"silver","weather_hourly",keys=["city","time"])
         return
     # local: unchanged
     in_partition =  (F.col("city") == city) & (F.col("year") == year )  
