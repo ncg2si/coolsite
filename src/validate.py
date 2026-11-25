@@ -81,40 +81,39 @@ def in_range(start: str, end: str) -> Column:
     first, last = range_bounds(start, end)
     return F.col("time").between(first, last)
 
-def check_dq03_time_range(df: DataFrame, start: str, end: str) -> tuple[CheckResult, int]:
+def check_dq03_time_range(df: DataFrame, start: str, end: str) -> tuple[CheckResult, int, int]:
     """DQ-03: hours must cover start 00:00 ... end 23:00.
     - hours outside the range -> warning (excluded from silver, NOT unusable)
     - hours missing at the edges -> warning + returned as unusable hours (budget: validate step 6)
     - no hour inside the range -> error
     - more or less than one city in the data -> error (assumption: one bronze file = one city)
-    Returns (result, missing_edge_hours)."""
-    n_cities = df.select("city").distinct().count()
-    if n_cities != 1:
-        return ("error", f"DQ-03 failed: expected exactly 1 city per file, found {n_cities}"), 0
-
+    Returns (result, missing_edge_hours, outside_hours)."""
     first, last = range_bounds(start, end)
     inside = in_range(start, end)
-    n_outside = df.filter(~inside).count()
-    edges = (df.filter(inside)
-               .agg(((F.min("time").cast("long") - first.cast("long")) / 3600).cast("int").alias("missing_head"),
-                    ((last.cast("long") - F.max("time").cast("long")) / 3600).cast("int").alias("missing_tail"))
-               .first())
-
-    if edges["missing_head"] is None:
-        return ("error", f"DQ-03 failed: no hours between {start} 00:00 and {end} 23:00"), 0
-
+    time_in = F.when(inside,F.col("time"))
+    row = df.agg(
+        F.count_distinct("city").alias("n_cities"),
+        F.sum(F.when(~inside,1).otherwise(0)).alias("outside"),
+        ((F.min(time_in).cast("long")-first.cast("long"))/3600).cast("int").alias("missing_head"),
+        ((last.cast("long") - F.max(time_in).cast("long")) / 3600).cast("int").alias("missing_tail")
+    ).first()
+    n_cities= row["n_cities"]
+    if n_cities != 1:
+        return ("error", f"DQ-03 failed: expected exactly 1 city per file, found {n_cities}"), 0, 0
+    n_outside = row["outside"]
+    if row["missing_head"] is None:
+        return ("error", f"DQ-03 failed: no hours between {start} 00:00 and {end} 23:00"), 0, n_outside
     issues = []
     if n_outside:
         issues.append(f"{n_outside} hour(s) outside the range, excluded from silver")
-    if edges["missing_head"]:
-        issues.append(f"{edges['missing_head']} hour(s) missing at the start")
-    if edges["missing_tail"]:
-        issues.append(f"{edges['missing_tail']} hour(s) missing at the end")
-
-    missing = edges["missing_head"] + edges["missing_tail"]
+    if row["missing_head"]:
+        issues.append(f"{row["missing_head"]} hour(s) missing at the start")
+    if row["missing_tail"]:
+        issues.append(f"{row['missing_tail']} hour(s) missing at the end")
+    missing = row["missing_head"] + row["missing_tail"]
     if issues:
-        return ("warning", "DQ-03 warning: " + "; ".join(issues)), missing
-    return None, 0
+        return ("warning", "DQ-03 warning: " + "; ".join(issues)), missing, n_outside
+    return None, 0, n_outside
 
 # Helper functions for dq04 check
 def drop_identical(df:DataFrame) -> DataFrame:
@@ -239,10 +238,10 @@ def validate(city: str, start: str, end: str) -> tuple[DataFrame, DataFrame]:
     # 3. DATASET RULES (DQ-03 on the full data, then drop the out-of-range rows)
     try:
         n_read = raw.count()                                     # all rows from bronze (for the balance check)
-        dq03_result, missing_edge_hours = check_dq03_time_range(raw, start, end)
+        dq03_result, missing_edge_hours, n_excluded = check_dq03_time_range(raw, start, end)
         collect(dq03_result, problems, warnings_list)
         raw = raw.filter(in_range(start, end))                    # out-of-range rows never reach DQ-04/05 or silver
-        n_excluded = n_read - raw.count()
+        #n_excluded = n_read - raw.count()
         # 4. MORE DATASET RULES: each returns (result, unusable hours)
         dq04_result, conflicting_hours = check_dq04_no_duplicates_hour(raw)
         collect(dq04_result,problems,warnings_list)
