@@ -84,7 +84,7 @@ def test_extra_field_only_warns(tmp_path, monkeypatch):
     hourly["extra_field"] = [5.0] * 24              # break it: one extra field
 
     with pytest.warns(UserWarning, match="DQ-01 warning"):
-        valid, quarantine = run_validate(tmp_path, monkeypatch, hourly)
+        valid, quarantine, _ = run_validate(tmp_path, monkeypatch, hourly)
 
     assert valid.count() == 24                      # the run continued with all good hours
 
@@ -94,7 +94,7 @@ def test_conflicting_hour_goes_to_quarantine(tmp_path, monkeypatch):
     add_hour(hourly, f"{DAY}T02:00", temperature=25.0)   # a second 02:00 with another value
 
     with pytest.warns(UserWarning):
-        valid, quarantine = run_validate(tmp_path, monkeypatch, hourly)
+        valid, quarantine, _ = run_validate(tmp_path, monkeypatch, hourly)
 
     assert quarantine.count() == 2                  # both copies of 02:00
     assert valid.count() == 23
@@ -113,7 +113,7 @@ def test_humidity_150_goes_to_quarantine_with_dq07(tmp_path, monkeypatch):
     hourly["relative_humidity_2m"][5] = 150         # break it: impossible humidity at 05:00
 
     with pytest.warns(UserWarning):                 # 1 unusable hour, within budget
-        valid, quarantine = run_validate(tmp_path, monkeypatch, hourly)
+        valid, quarantine,_ = run_validate(tmp_path, monkeypatch, hourly)
 
     assert quarantine.count() == 1
     assert valid.count() == 23
@@ -124,7 +124,7 @@ def test_dew_point_equal_to_temperature_is_valid(tmp_path, monkeypatch):
     hourly["dew_point_2m"][5] = 18.0          # = temperature (RH 100 %)
     path = write_bronze(tmp_path, hourly)
     monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
-    valid, quarantine = validate.validate("testcity", DAY, DAY)
+    valid, quarantine, _ = validate.validate("testcity", DAY, DAY)
     assert quarantine.count() == 0
 
 
@@ -134,7 +134,7 @@ def test_dew_point_0_1_above_temperature_is_valid(tmp_path, monkeypatch):
     hourly["dew_point_2m"][5] = 0.8           # exactly temperature + 0.1 (the floating-point case)
     path = write_bronze(tmp_path, hourly)
     monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
-    valid, quarantine = validate.validate("testcity", DAY, DAY)                                        
+    valid, quarantine, _ = validate.validate("testcity", DAY, DAY)                                        
     assert quarantine.count() == 0
 
 
@@ -155,7 +155,7 @@ def test_file_with_several_kinds_of_errors(tmp_path, monkeypatch):
     add_hour(hourly, "2026-06-02T00:00")            # one hour after the range
 
     with pytest.warns(UserWarning) as record:
-        valid, quarantine = run_validate(tmp_path, monkeypatch, hourly)
+        valid, quarantine,_ = run_validate(tmp_path, monkeypatch, hourly)
 
     # every row lands in exactly one place: 26 read = 1 excluded + 1 removed + 22 valid + 2 quarantined
     assert valid.count() == 22
