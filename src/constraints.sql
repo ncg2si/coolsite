@@ -30,6 +30,10 @@ ALTER TABLE silver.weather_hourly ADD CONSTRAINT dew_point_le_temperature CHECK 
 --3. Verify
 SHOW TBLPROPERTIES silver.weather_hourly;
 DESCRIBE TABLE silver.weather_hourly;
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'silver' AND table_name = 'weather_hourly'
+ORDER BY ordinal_position;
 
 --4. Post load checks : wet_bulb_c
 -- order of temperatures dew point <= wet-bulb <= air temperature 
