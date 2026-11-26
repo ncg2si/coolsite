@@ -7,7 +7,7 @@ WHERE NOT (temperature_c BETWEEN  -50 AND 55);
 SELECT COUNT(*) FROM silver.weather_hourly
 WHERE NOT (humidity_pct BETWEEN 0 AND 100);
 SELECT COUNT(*) FROM silver.weather_hourly
-WHERE NOT (ROUND(dew_point_c-temperature_c,1)) <= 0.1);
+WHERE NOT (ROUND(dew_point_c-temperature_c,1) <= 0.1);
 
 
 -- 1. Column constraints NOT NULL
