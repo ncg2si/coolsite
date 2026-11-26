@@ -41,6 +41,7 @@ SELECT
 -- SUM(CASE WHEN wet_bulb_c > temperature_c THEN 1 ELSE 0 END)
     COUNT_IF(wet_bulb_c > temperature_c) AS wb_above_temp, 
     COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct > 95) AS wb_above_temp_humid, 
+    COUNT_IF(wet_bulb_c > temperature_c AND temperature_c < 0) AS wb_above_temp_cold, 
     COUNT_IF(wet_bulb_c < dew_point_c) AS wb_below_dew,
     MAX(wet_bulb_c - temperature_c) AS max_wb_above_temp,
     MAX(dew_point_c - wet_bulb_c ) AS max_wb_below_dw
