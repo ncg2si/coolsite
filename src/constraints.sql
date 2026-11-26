@@ -43,14 +43,17 @@ ORDER BY ordinal_position;
 -- Result 2026-11-26 (13.1 M hours): 328 hours with wet-bulb > air temperature,
 -- all explained (humidity > 95 % or temperature < 0 C, 0 unexplained), max 0.14 C.
 -- Within the formula error; cold hours are free cooling anyway -> no cooling mode changes.
--- Still open: 225,717 hours with wet-bulb < dew point (max 0.24 C) -> under investigation.
+--  225,717 hours with wet-bulb < dew point (max 0.24 C) -> all at RH > 95 %, max 0.24
+-- near saturation wet-bulb and dew point are rounded 
+-- neither change a cooling mode (cold -> free cooling; saturated -> no evaporative gain)
 SELECT 
 -- SUM(CASE WHEN wet_bulb_c > temperature_c THEN 1 ELSE 0 END)
     COUNT_IF(wet_bulb_c > temperature_c) AS wb_above_temp, 
     COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct > 95) AS wb_above_temp_humid, --explain assumption for Stull formula only for rel humidity range 5%-99%
     COUNT_IF(wet_bulb_c > temperature_c AND temperature_c < 0) AS wb_above_temp_cold, --explain assumption for Stull formula not to apply when it is both dry and cold
-    COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct <= 95 AND temperature_c >= 0) AS wb_above_temp_unexplained
+    COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct <= 95 AND temperature_c >= 0) AS wb_above_temp_unexplained,
     COUNT_IF(wet_bulb_c < dew_point_c) AS wb_below_dew,
+    COUNT_IF(wet_bulb_c < dew_point_c AND humidity_pct > 95) AS wb_below_dew_humid,
     MAX(wet_bulb_c - temperature_c) AS max_wb_above_temp,
     MAX(dew_point_c - wet_bulb_c ) AS max_wb_below_dw
 FROM silver.weather_hourly;
@@ -58,6 +61,13 @@ FROM silver.weather_hourly;
 SELECT MIN(humidity_pct), MAX(humidity_pct)
 FROM silver.weather_hourly
 WHERE wet_bulb_c > temperature_c AND temperature_c < 0 AND humidity_pct <= 95;
+
+SELECT city, COUNT(*) AS hours,
+       MIN(temperature_c) AS min_t, MAX(temperature_c) AS max_t,
+       MAX(wet_bulb_c - temperature_c) AS max_excess
+FROM silver.weather_hourly
+WHERE wet_bulb_c > temperature_c AND temperature_c < 0 AND humidity_pct <= 95
+GROUP BY city;
 -- hours outside Stull's validated range
 SELECT city,
     COUNT_IF (humidity_pct < 5) AS rh_below_5,
@@ -67,3 +77,7 @@ SELECT city,
 FROM silver.weather_hourly
 GROUP BY city
 ORDER BY city;
+
+-- add constraint for wetbulb but with reasonable tolerance (within the published formula error)
+ALTER TABLE silver.weather_hourly ADD CONSTRAINT wet_bulb_plausible
+  CHECK (wet_bulb_c <= temperature_c + 1 AND wet_bulb_c >= dew_point_c - 1);
