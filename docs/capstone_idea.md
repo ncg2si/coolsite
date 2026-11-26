@@ -211,6 +211,7 @@ Share of hours per cooling mode, direct design:
 **Risks and assumptions**
 - **ERA5-Land is a model, not a measurement** (0.1° grid): local effects such as urban heat are smoothed → planned Meteostat cross-check.
 - **Degree-hours are a proxy**, not kWh or litres. Cool but humid hours run the chiller yet add 0 chiller degree-hours → reported separately as `humidity_limited_hours`.
+- **Wet-bulb is an approximation (Stull 2011):** an empirical fit, valid for 5–99 % relative humidity and −20 to 50 °C at sea-level pressure (1013.25 hPa), not for cold *and* dry air together; error −1 to +0.65 °C, mean absolute error < 0.3 °C. Silver check (13.1 M hours): only 328 hours have wet-bulb above air temperature, all at > 95 % humidity or below 0 °C, max 0.14 °C — cold hours are free cooling anyway, so no cooling mode changes.
 - **Thresholds are assumptions** (ASHRAE recommended range, ε values from literature) → kept as scenarios, not hidden in code.
 - **One point per city**: water stress and climate are taken at the city centre, not at an actual data-centre site.
 - **Recent data arrives late** and can be revised → load up to today − 7 days, re-read the last 7 days.

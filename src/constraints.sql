@@ -35,18 +35,29 @@ FROM information_schema.columns
 WHERE table_schema = 'silver' AND table_name = 'weather_hourly'
 ORDER BY ordinal_position;
 
---4. Post load checks : wet_bulb_c
--- order of temperatures dew point <= wet-bulb <= air temperature 
+
+-- 4. POST-LOAD CHECK: wet-bulb plausibility (warning only, not a constraint)
+-- Rule: dew point <= wet-bulb <= air temperature.
+-- wet_bulb_c is derived with Stull (2011): valid for 5-99 % RH and -20 to 50 C
+-- at 1013.25 hPa, error -1 to +0.65 C (mean absolute error < 0.3 C).
+-- Result 2026-11-26 (13.1 M hours): 328 hours with wet-bulb > air temperature,
+-- all explained (humidity > 95 % or temperature < 0 C, 0 unexplained), max 0.14 C.
+-- Within the formula error; cold hours are free cooling anyway -> no cooling mode changes.
+-- Still open: 225,717 hours with wet-bulb < dew point (max 0.24 C) -> under investigation.
 SELECT 
 -- SUM(CASE WHEN wet_bulb_c > temperature_c THEN 1 ELSE 0 END)
     COUNT_IF(wet_bulb_c > temperature_c) AS wb_above_temp, 
-    COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct > 95) AS wb_above_temp_humid, 
-    COUNT_IF(wet_bulb_c > temperature_c AND temperature_c < 0) AS wb_above_temp_cold, 
+    COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct > 95) AS wb_above_temp_humid, --explain assumption for Stull formula only for rel humidity range 5%-99%
+    COUNT_IF(wet_bulb_c > temperature_c AND temperature_c < 0) AS wb_above_temp_cold, --explain assumption for Stull formula not to apply when it is both dry and cold
     COUNT_IF(wet_bulb_c > temperature_c AND humidity_pct <= 95 AND temperature_c >= 0) AS wb_above_temp_unexplained
     COUNT_IF(wet_bulb_c < dew_point_c) AS wb_below_dew,
     MAX(wet_bulb_c - temperature_c) AS max_wb_above_temp,
     MAX(dew_point_c - wet_bulb_c ) AS max_wb_below_dw
 FROM silver.weather_hourly;
+
+SELECT MIN(humidity_pct), MAX(humidity_pct)
+FROM silver.weather_hourly
+WHERE wet_bulb_c > temperature_c AND temperature_c < 0 AND humidity_pct <= 95;
 -- hours outside Stull's validated range
 SELECT city,
     COUNT_IF (humidity_pct < 5) AS rh_below_5,
