@@ -1,6 +1,6 @@
 """Machine-readable part of docs/data_contract.md. Change both together and raise the version."""
 
-CONTRACT_VERSION = "0.6.1"
+CONTRACT_VERSION = "0.7.0"
 
 WEATHER_MODEL = "era5_land"
 # Structural (DQ-01): fields every bronze file must have
@@ -30,3 +30,13 @@ ROW_RULES = {
 # Severity policy (contract section 3)
 MAX_UNUSABLE_HOURS_PER_FILE = 2      # more → error, run fails
 MIN_COVERAGE_CITY_YEAR = 0.999       # less → city-year marked "incomplete" in gold
+
+
+WET_BULB_TOLERANCE_C = 1.0 # Stull (2011) published error: -1 to +0.65 °C
+SILVER_CONSTRAINTS = {
+    "key_city_not_null": "city IS NOT NULL",
+    "key_time_not_null": "time IS NOT NULL",
+    **{rule_id.lower().replace("-","_"): rule for rule_id, rule in ROW_RULES.items()}, # DQ-06a -> dq_06a
+    "wet_bulb_plausible":(f"wet_bulb_c <= temperature_c + {WET_BULB_TOLERANCE_C} AND wet_bulb_c >= dew_point_c - {WET_BULB_TOLERANCE_C}")
+}
+

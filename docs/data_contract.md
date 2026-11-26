@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.6.1 (2026-11-14) |
+| Version | 0.7.0 (2026-11-26) |
 | Producer | Open-Meteo Historical Weather API, model pinned to **ERA5-Land** (`models=era5_land`, 0.1° grid) |
 | Consumer | CoolSite pipeline (transform → silver) |
 | Owner | Cam Lai Ngo |
@@ -55,6 +55,20 @@
 - **Structural problems (DQ-01 missing field, DQ-02) are always errors**, independent of the tolerance
 - Quarantined rows are kept with the IDs of the rules they broke — never deleted silently
 
+## 3b. Silver table guarantees (Delta CHECK constraints)
+Rules enforced **on the table** `silver.weather_hourly`: every write (backfill, incremental) that breaks fails as a whole and leaves the table unchanged. Applied by `src/constraints.py` (`apply_silver_constraints`):
+
+| Constraint | Rule | Source |
+|---|---|---|
+| key_city_not_null, key_time_not_null | city, time not null | table key |
+| dq_06a, dq_06b, dq_06c | temperature, dew point, humidity not null | = DQ-06 |
+| dq_07 | humidity 0–100 % | = DQ-07 |
+| dq_08 | temperature −50 to 55 °C | = DQ-08 |
+| dq_09 | `ROUND(dew_point_c - temperature_c, 1) <= 0.1` | = DQ-09 |
+| wet_bulb_plausible | dew point − 1 °C ≤ wet-bulb ≤ temperature + 1 °C (`WET_BULB_TOLERANCE_C`) | derived column |
+
+- **wet_bulb_plausible** guards against code bugs in the calculation of wet-bulb, not against the source. Tolerance = 1 °C is published error of Stull, -1 to +0.65 °C. 
+
 ## 4. Freshness
 - ERA5 / ERA5-Land arrive with ~5 days delay; the most recent days come from another model
   and may be revised → every run reloads the last 7 days (overwrite, idempotent)
@@ -72,3 +86,4 @@
 - 0.5 (2026-11-13): model pinned to ERA5-Land (`models=era5_land`, 0.1° grid, coordinates snap to the grid); neutral column names in silver (temperature_c, humidity_pct, dew_point_c) via COLUMN_MAP; backfill stored as one bronze file per city × year; DQ-03 adds the one-city-per-file guard; DQ-04 conflicting duplicates → quarantine with rule ID, counted once per hour; DQ-05 off-grid steps reported, runs before duplicate handling; DQ-06 split into a/b/c per field
 - 0.6 (2026-11-14): DQ-09 tolerance 0 → 0.1 °C (API rounding to 0.1 °C); found in the first real quarantine (Stockholm 2024-02-22 04:00: dew point 1.6 °C vs temperature 1.5 °C at RH 100 %); tolerance in src/contract.py as DEW_POINT_TOLERANCE_C
 - 0.6.1 (2026-11-14): DQ-09 implementation fix, rule meaning unchanged: compare the difference rounded to 0.1 °C (floating-point error quarantined values exactly at temperature + 0.1 °C: Reykjavik 1988, Stockholm 1999). Only the two affected city-years were reprocessed; all other silver rows are unaffected by this fix
+- 0.7.0 (2026-11-26): silver table guarantees as Delta CHECK constraints (section 3b): DQ-06...09 enforced on the table, pluse key not-null and wet-bulb plausibility (±1 °C, Stull 2011 published error). Source rules (section 2) unchanged
