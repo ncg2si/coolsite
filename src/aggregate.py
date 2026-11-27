@@ -12,12 +12,9 @@ from dimensions import (
     build_dim_scenario,
     build_dim_year,
 )
-from paths import (
-    SCENARIOS_FILE,
-    SILVER,
-)
+from paths import SCENARIOS_FILE
 from spark_utils import get_spark
-from storage import write_table
+from storage import read_table, write_table
 from utils.log import get_logger
 
 
@@ -61,7 +58,7 @@ def build_gold():
     silver = None
     try:
         spark = get_spark()
-        silver = spark.read.parquet(str(SILVER)).cache()
+        silver = read_table(spark,"silver","weather_hourly")
         scenarios = load_scenarios()
         all_modes = None
         for scenario in scenarios:
@@ -85,12 +82,13 @@ def build_gold():
         dim_scenario = build_dim_scenario(spark)
         write_table(dim_scenario,"gold","dim_scenario")
         dim_city = build_dim_city(spark)
-        write_table(dim_city,"gold",dim_city)
+        write_table(dim_city,"gold","dim_city")
         first,last = fact_city_year.agg(F.min("year"),F.max("year")).first()
         dim_year = build_dim_year(first,last,spark)
-        #dim_year.write.mode("overwrite").parquet(str(GOLD_DIM_YEAR))
         write_table(dim_year,"gold","dim_year")
-        log.info(f"gold written: fact_cooling_hours {fact_cooling_hours.count()} rows, fact_city_year {fact_city_year.count()} rows")
+        n_hours = read_table(fact_cooling_hours).count()
+        n_city_year = read_table(fact_city_year).count()
+        log.info(f"gold written: fact_cooling_hours {n_hours} rows, fact_city_year {n_city_year} rows")
         log.info(f"gold run finished: SUCCESS ({time.perf_counter()- t0:.1f} s)")
     except Exception:
         log.exception("gold run FAILED")
