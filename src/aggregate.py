@@ -86,8 +86,8 @@ def build_gold():
         first,last = fact_city_year.agg(F.min("year"),F.max("year")).first()
         dim_year = build_dim_year(first,last,spark)
         write_table(dim_year,"gold","dim_year")
-        n_hours = read_table(fact_cooling_hours).count()
-        n_city_year = read_table(fact_city_year).count()
+        n_hours = read_table(fact_cooling_hours,"gold","fact_cooling_hours").count()
+        n_city_year = read_table(fact_city_year,"gold","fact_city_year").count()
         log.info(f"gold written: fact_cooling_hours {n_hours} rows, fact_city_year {n_city_year} rows")
         log.info(f"gold run finished: SUCCESS ({time.perf_counter()- t0:.1f} s)")
     except Exception:
