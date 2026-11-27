@@ -81,3 +81,9 @@ ORDER BY city;
 -- add constraint for wetbulb but with reasonable tolerance (within the published formula error)
 ALTER TABLE silver.weather_hourly ADD CONSTRAINT wet_bulb_plausible
   CHECK (wet_bulb_c <= temperature_c + 1 AND wet_bulb_c >= dew_point_c - 1);
+
+-- Migrated to constraints.py(contract 0.7.0)
+ALTER TABLE silver.weather_hourly DROP CONSTRAINT IF EXISTS temperature_range;          -- = dq_08
+ALTER TABLE silver.weather_hourly DROP CONSTRAINT IF EXISTS humidity_range;             -- = dq_07
+ALTER TABLE silver.weather_hourly DROP CONSTRAINT IF EXISTS dew_point_le_temperature;   -- = dq_09
+SHOW TBLPROPERTIES silver.weather_hourly;

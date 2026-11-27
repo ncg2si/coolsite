@@ -2,6 +2,8 @@ from pyspark.sql import functions as F
 
 from contract import SILVER_CONSTRAINTS
 from storage import read_table, table_name
+from spark_utils import get_spark
+from paths import ON_DATABRICKS
 
 
 def apply_silver_constraints(spark) -> None:
@@ -17,13 +19,23 @@ def count_violations(spark) -> dict:
     return df.agg(*checks).first().asDict()
 
 
-# def count_violations(spark) -> dict:
-#     df = read_table(spark,"silver","weather_hourly")
-#     row = (df.agg(
-#         F.count_if((F.col("temperature_c")>55)|(F.col("temperature_c")<-50)).alias("n_temp_out_of_range"),
-#         F.count_if((F.col("humidity_pct")>100)|(F.col("humidity_pct")<0)).alias("n_humidity_out_of_range"),
-#         F.count_if(F.round(F.col("dew_point_c")-F.col("temperature_c"),1)>0.1).alias("n_dew_above_temp"),
-#         F.count_if((F.col("wet_bulb_c") > F.col("temperature_c") + WET_BULB_TOLERANCE_C)
-#              | (F.col("wet_bulb_c") < F.col("dew_point_c") - WET_BULB_TOLERANCE_C)).alias("n_wb_implausible"),     
-#     ).first())
-#     return row.asDict()
+if __name__ == "__main__":
+    #only on Databricks
+    if not ON_DATABRICKS:
+        print("Run this on Databricks - Constraints need a Delta table in Unity Catalog")
+    else:
+        spark = get_spark()
+        table = table_name("silver","weather_hourly")
+        violations = count_violations(spark)
+        failed = {rule:n for rule,n in violations.items() if n>0}
+        if failed:
+            for rule,count in failed.items():
+                print(f"Rule {rule} violated : {count} rows")
+            raise ValueError(f"Silver violates {len(failed)} constraint(s): {failed}")
+        apply_silver_constraints(spark)
+        (spark.sql(f"SHOW TBLPROPERTIES {table}")
+         .filter("key LIKE 'delta.constraints.%'")
+         .show(truncate=False)
+         )
+            
+        
