@@ -15,7 +15,9 @@ def get_logger(name: str) -> logging.Logger:
     if logger.handlers:
         return logger
     logger.setLevel(logging.INFO)
-    logger.propagate = False          # avoid duplicate lines via the root logger (e.g. on Databricks)
+    logger.propagate = (
+        False  # avoid duplicate lines via the root logger (e.g. on Databricks)
+    )
     formatter = logging.Formatter(FORMAT)
 
     console = logging.StreamHandler(sys.stdout)

@@ -18,8 +18,9 @@ def local_data(tmp_path, monkeypatch):
 
 
 def rows(spark):
-    return spark.createDataFrame([Row(city="berlin", year=2025, v=1),
-                                  Row(city="oslo",   year=2025, v=2)])
+    return spark.createDataFrame(
+        [Row(city="berlin", year=2025, v=1), Row(city="oslo", year=2025, v=2)]
+    )
 
 
 def test_write_then_read(spark, local_data):

@@ -8,25 +8,25 @@ from validate import parse_date_range
 DAY = "2026-06-01"
 
 
-
-
 def test_invalid_end_date_is_rejected():
     with pytest.raises(ValueError, match="invalid end date"):
         parse_date_range("2025-01-01", "2025-31-12")
 
+
 def test_start_after_end_is_rejected():
     with pytest.raises(ValueError, match="is after end date"):
-        parse_date_range("2025-12-31","2025-01-01")
+        parse_date_range("2025-12-31", "2025-01-01")
+
 
 def test_valid_range_returns_dates():
     start_d, end_d = parse_date_range("2025-01-01", "2025-12-31")
     assert end_d.month == 12
 
 
-
 # ---------------------------------------------------------------------------
 # Helpers (not tests: they don't start with test_)
 # ---------------------------------------------------------------------------
+
 
 def good_hourly():
     """24 clean hours in the raw Open-Meteo format."""
@@ -64,6 +64,7 @@ def run_validate(tmp_path, monkeypatch, hourly):
 # Tests
 # ---------------------------------------------------------------------------
 
+
 def test_write_bronze_creates_a_readable_file(tmp_path):
     path = write_bronze(tmp_path, good_hourly())
     raw = json.loads(path.read_text())
@@ -73,7 +74,7 @@ def test_write_bronze_creates_a_readable_file(tmp_path):
 
 def test_missing_field_stops_the_run(tmp_path, monkeypatch):
     hourly = good_hourly()
-    del hourly["dew_point_2m"]                      # break it: one field missing
+    del hourly["dew_point_2m"]  # break it: one field missing
 
     with pytest.raises(ValueError, match="DQ-01 failed"):
         run_validate(tmp_path, monkeypatch, hourly)
@@ -81,47 +82,54 @@ def test_missing_field_stops_the_run(tmp_path, monkeypatch):
 
 def test_extra_field_only_warns(tmp_path, monkeypatch):
     hourly = good_hourly()
-    hourly["extra_field"] = [5.0] * 24              # break it: one extra field
+    hourly["extra_field"] = [5.0] * 24  # break it: one extra field
 
     with pytest.warns(UserWarning, match="DQ-01 warning"):
         valid, quarantine, _ = run_validate(tmp_path, monkeypatch, hourly)
 
-    assert valid.count() == 24                      # the run continued with all good hours
+    assert valid.count() == 24  # the run continued with all good hours
 
 
 def test_conflicting_hour_goes_to_quarantine(tmp_path, monkeypatch):
     hourly = good_hourly()
-    add_hour(hourly, f"{DAY}T02:00", temperature=25.0)   # a second 02:00 with another value
+    add_hour(
+        hourly, f"{DAY}T02:00", temperature=25.0
+    )  # a second 02:00 with another value
 
     with pytest.warns(UserWarning):
         valid, quarantine, _ = run_validate(tmp_path, monkeypatch, hourly)
 
-    assert quarantine.count() == 2                  # both copies of 02:00
+    assert quarantine.count() == 2  # both copies of 02:00
     assert valid.count() == 23
 
 
 def test_three_missing_hours_exceed_the_budget(tmp_path, monkeypatch):
-    hourly = {column: values[3:] for column, values in good_hourly().items()}   # drop 00, 01, 02
+    hourly = {
+        column: values[3:] for column, values in good_hourly().items()
+    }  # drop 00, 01, 02
 
-    with pytest.warns(UserWarning):                 # DQ-03 warns about the missing hours …
-        with pytest.raises(ValueError, match="exceeded budget"):   # … and the budget stops the run
+    with pytest.warns(UserWarning):  # DQ-03 warns about the missing hours …
+        with pytest.raises(
+            ValueError, match="exceeded budget"
+        ):  # … and the budget stops the run
             run_validate(tmp_path, monkeypatch, hourly)
 
 
 def test_humidity_150_goes_to_quarantine_with_dq07(tmp_path, monkeypatch):
     hourly = good_hourly()
-    hourly["relative_humidity_2m"][5] = 150         # break it: impossible humidity at 05:00
+    hourly["relative_humidity_2m"][5] = 150  # break it: impossible humidity at 05:00
 
-    with pytest.warns(UserWarning):                 # 1 unusable hour, within budget
-        valid, quarantine,_ = run_validate(tmp_path, monkeypatch, hourly)
+    with pytest.warns(UserWarning):  # 1 unusable hour, within budget
+        valid, quarantine, _ = run_validate(tmp_path, monkeypatch, hourly)
 
     assert quarantine.count() == 1
     assert valid.count() == 23
     assert "DQ-07" in quarantine.first()["failed_rules"]
 
+
 def test_dew_point_equal_to_temperature_is_valid(tmp_path, monkeypatch):
     hourly = good_hourly()
-    hourly["dew_point_2m"][5] = 18.0          # = temperature (RH 100 %)
+    hourly["dew_point_2m"][5] = 18.0  # = temperature (RH 100 %)
     path = write_bronze(tmp_path, hourly)
     monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
     valid, quarantine, _ = validate.validate("testcity", DAY, DAY)
@@ -131,13 +139,13 @@ def test_dew_point_equal_to_temperature_is_valid(tmp_path, monkeypatch):
 def test_dew_point_0_1_above_temperature_is_valid(tmp_path, monkeypatch):
     hourly = good_hourly()
     hourly["temperature_2m"][5] = 0.7
-    hourly["dew_point_2m"][5] = 0.8           # exactly temperature + 0.1 (the floating-point case)
+    hourly["dew_point_2m"][5] = (
+        0.8  # exactly temperature + 0.1 (the floating-point case)
+    )
     path = write_bronze(tmp_path, hourly)
     monkeypatch.setattr(validate, "latest_bronze_path", lambda city, start, end: path)
-    valid, quarantine, _ = validate.validate("testcity", DAY, DAY)                                        
+    valid, quarantine, _ = validate.validate("testcity", DAY, DAY)
     assert quarantine.count() == 0
-
-
 
 
 def test_file_with_several_kinds_of_errors(tmp_path, monkeypatch):
@@ -150,21 +158,23 @@ def test_file_with_several_kinds_of_errors(tmp_path, monkeypatch):
     """
     hourly = good_hourly()
     hourly["relative_humidity_2m"][5] = 150
-    hourly["dew_point_2m"][7] = 20.0                # above the 18.0 °C temperature
-    add_hour(hourly, f"{DAY}T10:00")                # identical copy of 10:00
-    add_hour(hourly, "2026-06-02T00:00")            # one hour after the range
+    hourly["dew_point_2m"][7] = 20.0  # above the 18.0 °C temperature
+    add_hour(hourly, f"{DAY}T10:00")  # identical copy of 10:00
+    add_hour(hourly, "2026-06-02T00:00")  # one hour after the range
 
     with pytest.warns(UserWarning) as record:
-        valid, quarantine,_ = run_validate(tmp_path, monkeypatch, hourly)
+        valid, quarantine, _ = run_validate(tmp_path, monkeypatch, hourly)
 
     # every row lands in exactly one place: 26 read = 1 excluded + 1 removed + 22 valid + 2 quarantined
     assert valid.count() == 22
     assert quarantine.count() == 2
 
-    broken_rules = {rule for row in quarantine.collect() for rule in row["failed_rules"]}
+    broken_rules = {
+        rule for row in quarantine.collect() for rule in row["failed_rules"]
+    }
     assert broken_rules == {"DQ-07", "DQ-09"}
 
     messages = " ".join(str(w.message) for w in record)
-    assert "DQ-03" in messages                      # the hour outside the range was reported
-    assert "DQ-04" in messages                      # the identical duplicate was reported
-    assert "within budget" in messages              # 2 unusable hours = exactly the budget
+    assert "DQ-03" in messages  # the hour outside the range was reported
+    assert "DQ-04" in messages  # the identical duplicate was reported
+    assert "within budget" in messages  # 2 unusable hours = exactly the budget
